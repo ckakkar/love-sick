@@ -1,26 +1,133 @@
 @import "tailwindcss";
 
+/* Phase 2: "Purple Heart" / Deep Electric Violet — Romance is Creation, not Consumption */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #020617; /* slate-950 */
+  --foreground: #f1f5f9;
+  --card: #0f172a;
+  --card-foreground: #f1f5f9;
+  --popover: #0f172a;
+  --popover-foreground: #f1f5f9;
+  --primary: #7c3aed; /* violet-600 Electric Purple */
+  --primary-foreground: #fff;
+  --secondary: #1e1b4b; /* deep void */
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #2e1065; /* fuchsia-950 / deep void purple */
+  --accent-foreground: #f1f5f9;
+  --destructive: #7f1d1d;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #7c3aed;
+  --radius: 0.75rem;
+  /* Sync state ONLY — amber-400 Gold (Heartbeat Sync) */
+  --sync-glow: #fbbf24;
+  /* Charts: violet family, no red/tech blue */
+  --chart-1: #7c3aed;
+  --chart-2: #a78bfa;
+  --chart-3: #c4b5fd;
+  --chart-4: #fbbf24;
+  --chart-5: #34d399;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
+  --font-serif: var(--font-playfair);
   --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Headers: Literature / Poetry serif */
+.font-serif,
+h1, h2, h3, h4, .heading-serif {
+  font-family: var(--font-serif), Georgia, serif;
+}
+
+/* Glassmorphism */
+.glass {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(124, 58, 237, 0.12);
+}
+
+/* Deep Electric Violet gradient mesh */
+.gradient-mesh {
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -15%, rgba(124, 58, 237, 0.15), transparent 50%),
+    radial-gradient(ellipse 70% 50% at 100% 10%, rgba(30, 27, 75, 0.4), transparent 45%),
+    radial-gradient(ellipse 70% 50% at 0% 80%, rgba(46, 16, 101, 0.25), transparent 45%),
+    var(--background);
+}
+
+/* Sync state: amber glow (Heartbeat Sync) */
+.sync-glow {
+  box-shadow: 0 0 24px 2px rgba(251, 191, 36, 0.35);
+  border-color: var(--sync-glow);
+}
+
+.card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 40px -12px rgba(124, 58, 237, 0.2);
+  border-color: rgba(124, 58, 237, 0.25);
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    rgba(124, 58, 237, 0.12) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+*:focus-visible {
+  outline: none;
+  transition: box-shadow 0.2s ease;
 }
