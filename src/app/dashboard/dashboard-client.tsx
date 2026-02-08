@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { getCoupleInsight } from "@/app/actions/insight";
+import { getCoupleInsight, getSoloInsight } from "@/app/actions/insight";
 import { PrologueModal } from "@/components/prologue-modal";
 import type { CoachOutput } from "@/lib/ai/insight";
 import {
@@ -15,6 +15,7 @@ import {
   Legend,
 } from "recharts";
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { LOVE_LANGUAGE_KEYS, type LoveScores } from "@/types/assessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -84,6 +85,8 @@ export function DashboardClient({
   const loading = myGiving === null && myReceiving === null;
   const [insight, setInsight] = useState<CoachOutput | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
+  const [soloInsight, setSoloInsight] = useState<CoachOutput | null>(null);
+  const [soloInsightLoading, setSoloInsightLoading] = useState(false);
   const [prologueUnlocked, setPrologueUnlocked] = useState(hasPrologue);
   const [dissolving, setDissolving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -284,6 +287,87 @@ export function DashboardClient({
             </CardContent>
           </Card>
           </motion.div>
+
+          {/* Solo AI Insights — for users without a partner */}
+          {!hasPartner && hasAssessment && (
+            <motion.div variants={cardItem} className="lg:col-span-2">
+              <Card className="card-hover glass relative overflow-hidden border-violet-500/20 bg-gradient-to-b from-violet-500/5 to-transparent lg:col-span-2 shadow-lg shadow-violet-500/10">
+                <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/10 blur-3xl" />
+                <CardHeader className="relative">
+                  <CardTitle className="flex items-center gap-2 font-serif text-xl">
+                    <span className="rounded-lg bg-violet-500/15 p-1.5">
+                      <Sparkles className="h-5 w-5 text-violet-400" />
+                    </span>
+                    Insights for you
+                  </CardTitle>
+                  <CardDescription>
+                    Send your love language preferences to AI and get a personal prescription — how to grow in self-love and be ready to love others.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  {soloInsightLoading ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-24 w-full rounded-xl" />
+                      <Skeleton className="h-28 w-full rounded-xl" />
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        <Skeleton className="h-24 rounded-xl" />
+                        <Skeleton className="h-24 rounded-xl" />
+                        <Skeleton className="h-24 rounded-xl" />
+                      </div>
+                    </div>
+                  ) : soloInsight ? (
+                    <div className="space-y-6">
+                      <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                        {soloInsight.relationshipPrescription}
+                      </p>
+                      <div className="grid gap-3 sm:grid-cols-3">
+                        {soloInsight.threeDates.map((d, i) => (
+                          <div
+                            key={i}
+                            className="rounded-xl border border-violet-500/15 bg-muted/40 p-4 transition-colors hover:border-violet-500/25 hover:bg-violet-500/5"
+                          >
+                            <div className="font-medium text-foreground">{d.title}</div>
+                            <p className="mt-1 text-sm text-muted-foreground">{d.why}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 border-violet-400/30 text-violet-200 hover:bg-violet-500/10"
+                        onClick={async () => {
+                          setSoloInsightLoading(true);
+                          try {
+                            const result = await getSoloInsight(giving, receiving);
+                            setSoloInsight(result);
+                          } finally {
+                            setSoloInsightLoading(false);
+                          }
+                        }}
+                      >
+                        Regenerate insight
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-400 hover:to-purple-500 hover:shadow-violet-500/30"
+                      onClick={async () => {
+                        setSoloInsightLoading(true);
+                        try {
+                          const result = await getSoloInsight(giving, receiving);
+                          setSoloInsight(result);
+                        } finally {
+                          setSoloInsightLoading(false);
+                        }
+                      }}
+                    >
+                      Get my insights
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
           {/* Heatmap */}
           <motion.div variants={cardItem} className="lg:col-span-2">

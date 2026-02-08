@@ -11,6 +11,12 @@ export interface CoachOutput {
   threeDates: { title: string; why: string }[];
 }
 
+export interface SoloAnalystOutput {
+  strengths: { dimension: string; score: number; description: string }[];
+  growArea: { dimension: string; description: string };
+  summary: string;
+}
+
 const DEEPSEEK_API = "https://api.deepseek.com/v1/chat/completions";
 const OPENAI_API = "https://api.openai.com/v1/chat/completions";
 
@@ -21,6 +27,131 @@ export async function generateCoupleInsight(
   const analyst = await runAnalyst(userStats, partnerStats);
   const coach = await runCoach(analyst);
   return { analyst, coach };
+}
+
+export async function generateSoloInsight(
+  giving: LoveScores,
+  receiving: LoveScores
+): Promise<CoachOutput> {
+  const analyst = await runSoloAnalyst(giving, receiving);
+  return runSoloCoach(analyst);
+}
+
+async function runSoloAnalyst(giving: LoveScores, receiving: LoveScores): Promise<SoloAnalystOutput> {
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) return getFallbackSoloAnalyst();
+
+  const payload = {
+    model: "deepseek-chat",
+    messages: [
+      {
+        role: "system",
+        content: `You are a 'Romantic Essentialist' and 'Data Poet.' Analyze one person's love language scores (1-10).
+Dimensions: words, service, gifts, time, touch. Two vectors: giving (how they express love), receiving (how they need to receive love).
+Identify their top 2 strengths (dimension + brief description), one area to grow (where giving and receiving might be misaligned or low), and a 1–2 sentence summary. STRICTLY no consumerist advice (no buying gifts, expensive dates, trips). Focus on creation and presence.
+Output valid JSON only, no markdown:
+{"strengths":[{"dimension":"string","score":number,"description":"string"}],"growArea":{"dimension":"string","description":"string"},"summary":"string"}`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify({ giving, receiving }),
+      },
+    ],
+    temperature: 0.3,
+  };
+
+  const res = await fetch(DEEPSEEK_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) return getFallbackSoloAnalyst();
+
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const raw = data.choices?.[0]?.message?.content?.trim();
+  if (!raw) return getFallbackSoloAnalyst();
+
+  try {
+    const parsed = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, "")) as SoloAnalystOutput;
+    if (parsed.strengths?.length && parsed.growArea && parsed.summary) return parsed;
+  } catch {
+    // ignore
+  }
+  return getFallbackSoloAnalyst();
+}
+
+function getFallbackSoloAnalyst(): SoloAnalystOutput {
+  return {
+    strengths: [
+      { dimension: "words", score: 5, description: "Verbal affirmation." },
+      { dimension: "time", score: 5, description: "Quality time." },
+    ],
+    growArea: { dimension: "touch", description: "Physical closeness." },
+    summary: "Your love map is unique. Get personalized insights above.",
+  };
+}
+
+async function runSoloCoach(analyst: SoloAnalystOutput): Promise<CoachOutput> {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return getFallbackSoloCoach();
+
+  const payload = {
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: `You are a 'Romantic Essentialist' and 'Data Poet.'
+Context: A single person's love language analysis (strengths, one area to grow, summary). Your job: write a short "Personal prescription" (2–3 paragraphs) that helps them grow in self-love and readiness to love others. Then suggest exactly 3 actionable, non-consumerist rituals or practices (title + one sentence "why"). STRICTLY FORBIDDEN: buying gifts, expensive dinners, booking trips, generic consumerist dates. Focus on creation, presence, and small daily rituals.
+Tone: Witty, deep, slightly poetic. No corporate speak.
+Output valid JSON only, no markdown:
+{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}`,
+      },
+      {
+        role: "user",
+        content: JSON.stringify(analyst),
+      },
+    ],
+    temperature: 0.7,
+  };
+
+  const res = await fetch(OPENAI_API, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${key}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) return getFallbackSoloCoach();
+
+  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+  const raw = data.choices?.[0]?.message?.content?.trim();
+  if (!raw) return getFallbackSoloCoach();
+
+  try {
+    const parsed = JSON.parse(raw.replace(/^```json\s*|\s*```$/g, "")) as CoachOutput;
+    if (parsed.relationshipPrescription && Array.isArray(parsed.threeDates)) return parsed;
+  } catch {
+    // ignore
+  }
+  return getFallbackSoloCoach();
+}
+
+function getFallbackSoloCoach(): CoachOutput {
+  return {
+    relationshipPrescription:
+      "Your love language map is yours alone. Use it to notice how you give and what you need. When you're ready to share it with someone, you'll already know the way.",
+    threeDates: [
+      { title: "Words night", why: "Lean into verbal affirmation." },
+      { title: "Solo quality time", why: "Undistracted presence with yourself." },
+      { title: "Touch-friendly ritual", why: "Physical self-care or connection." },
+    ],
+  };
 }
 
 async function runAnalyst(

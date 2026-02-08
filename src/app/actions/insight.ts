@@ -1,6 +1,6 @@
 "use server";
 
-import { generateCoupleInsight } from "@/lib/ai/insight";
+import { generateCoupleInsight, generateSoloInsight } from "@/lib/ai/insight";
 import type { LoveScores } from "@/types/assessment";
 
 export async function getCoupleInsight(
@@ -13,4 +13,8 @@ export async function getCoupleInsight(
     { giving: userGiving, receiving: userReceiving },
     { giving: partnerGiving, receiving: partnerReceiving }
   );
+}
+
+export async function getSoloInsight(giving: LoveScores, receiving: LoveScores) {
+  return generateSoloInsight(giving, receiving);
 }
