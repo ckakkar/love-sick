@@ -13,6 +13,12 @@ import {
   PolarRadiusAxis,
   ResponsiveContainer,
   Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
 } from "recharts";
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
@@ -39,6 +45,14 @@ function buildRadarData(scores: LoveScores, partnerScores?: LoveScores | null) {
     value: scores[key],
     partnerValue: partnerScores ? partnerScores[key] : undefined,
     key,
+  }));
+}
+
+function buildBarData(scores: LoveScores, partnerScores?: LoveScores | null) {
+  return LOVE_LANGUAGE_KEYS.map((key) => ({
+    subject: LABELS_SHORT[key],
+    you: scores[key],
+    partner: partnerScores ? partnerScores[key] : undefined,
   }));
 }
 
@@ -87,6 +101,8 @@ export function DashboardClient({
   const [insightLoading, setInsightLoading] = useState(false);
   const [soloInsight, setSoloInsight] = useState<CoachOutput | null>(null);
   const [soloInsightLoading, setSoloInsightLoading] = useState(false);
+  const [fingerprintChartType, setFingerprintChartType] = useState<"radar" | "bar">("radar");
+  const [receivingChartType, setReceivingChartType] = useState<"radar" | "bar">("radar");
   const [prologueUnlocked, setPrologueUnlocked] = useState(hasPrologue);
   const [dissolving, setDissolving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -113,6 +129,7 @@ export function DashboardClient({
   };
 
   const radarData = buildRadarData(giving, partnerGiving);
+  const receivingRadarData = buildRadarData(receiving, partnerReceiving);
 
   const container = {
     hidden: { opacity: 0 },
@@ -212,57 +229,196 @@ export function DashboardClient({
               </Card>
             </motion.div>
           )}
-          {/* Radar */}
+          {/* Fingerprint — Radar or Bar */}
           <motion.div variants={cardItem}>
-          <Card className="card-hover glass border-purple-500/10">
-            <CardHeader>
-              <CardTitle>The Fingerprint</CardTitle>
-              <CardDescription>
-                How you give love (filled) — {hasPartner ? "you vs partner (outline)" : "your scores 1–10"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-[320px] w-full rounded-lg" />
-              ) : (
-                <div className="h-[320px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart data={radarData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
-                      <PolarGrid stroke="var(--border)" />
-                      <PolarAngleAxis
-                        dataKey="subject"
-                        tick={{ fill: "var(--muted-foreground)", fontSize: 12 }}
-                      />
-                      <PolarRadiusAxis
-                        angle={90}
-                        domain={[0, 10]}
-                        tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
-                      />
-                      <Radar
-                        name="You (Giving)"
-                        dataKey="value"
-                        stroke="#a78bfa"
-                        fill="#a78bfa"
-                        fillOpacity={0.4}
-                        strokeWidth={2}
-                      />
-                      {hasPartner && partnerGiving && (
+            <Card className="card-hover overflow-hidden border-0 bg-card/80 shadow-lg shadow-black/5 backdrop-blur-sm">
+              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-border/40 pb-4">
+                <div>
+                  <CardTitle className="font-serif text-lg tracking-tight">The Fingerprint</CardTitle>
+                  <CardDescription className="mt-1 text-xs text-muted-foreground">
+                    How you give love — {hasPartner ? "you vs partner" : "your scores"}
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Chart</span>
+                  <select
+                    value={fingerprintChartType}
+                    onChange={(e) => setFingerprintChartType(e.target.value as "radar" | "bar")}
+                    className={cn(
+                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-colors",
+                      "hover:border-violet-400/30 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
+                    )}
+                  >
+                    <option value="radar">Radar</option>
+                    <option value="bar">Bar</option>
+                  </select>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-5">
+                {loading ? (
+                  <Skeleton className="h-[320px] w-full rounded-xl" />
+                ) : fingerprintChartType === "radar" ? (
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={radarData} margin={{ top: 16, right: 24, left: 24, bottom: 16 }}>
+                        <PolarGrid stroke="var(--border)" strokeOpacity={0.6} />
+                        <PolarAngleAxis
+                          dataKey="subject"
+                          tick={{ fill: "var(--muted-foreground)", fontSize: 11, fontWeight: 500 }}
+                        />
+                        <PolarRadiusAxis
+                          angle={90}
+                          domain={[0, 10]}
+                          tick={false}
+                        />
                         <Radar
-                          name="Partner (Giving)"
-                          dataKey="partnerValue"
-                          stroke="#c4b5fd"
-                          fill="#c4b5fd"
-                          fillOpacity={0.28}
+                          name="You (Giving)"
+                          dataKey="value"
+                          stroke="#a78bfa"
+                          fill="#a78bfa"
+                          fillOpacity={0.35}
                           strokeWidth={2}
                         />
-                      )}
-                      <Legend />
-                    </RadarChart>
-                  </ResponsiveContainer>
+                        {hasPartner && partnerGiving && (
+                          <Radar
+                            name="Partner (Giving)"
+                            dataKey="partnerValue"
+                            stroke="#c4b5fd"
+                            fill="#c4b5fd"
+                            fillOpacity={0.22}
+                            strokeWidth={2}
+                          />
+                        )}
+                        <Legend
+                          wrapperStyle={{ fontSize: 11 }}
+                          formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={buildBarData(giving, partnerGiving)}
+                        layout="vertical"
+                        margin={{ top: 8, right: 24, left: 56, bottom: 8 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
+                        <XAxis type="number" domain={[0, 10]} tick={false} axisLine={false} />
+                        <YAxis type="category" dataKey="subject" width={52} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }}
+                          labelStyle={{ color: "var(--foreground)" }}
+                          formatter={(value: number | undefined) => [value ?? 0, ""]}
+                          labelFormatter={(label) => label}
+                        />
+                        <Bar dataKey="you" name="You" fill="#a78bfa" fillOpacity={0.9} radius={[0, 6, 6, 0]} maxBarSize={28} />
+                        {hasPartner && partnerGiving && (
+                          <Bar dataKey="partner" name="Partner" fill="#c4b5fd" fillOpacity={0.8} radius={[0, 6, 6, 0]} maxBarSize={28} />
+                        )}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Receiving — Radar or Bar */}
+          <motion.div variants={cardItem}>
+            <Card className="card-hover overflow-hidden border-0 bg-card/80 shadow-lg shadow-black/5 backdrop-blur-sm">
+              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-border/40 pb-4">
+                <div>
+                  <CardTitle className="font-serif text-lg tracking-tight">How you need to receive love</CardTitle>
+                  <CardDescription className="mt-1 text-xs text-muted-foreground">
+                    What makes you feel loved — {hasPartner ? "you vs partner" : "your scores"}
+                  </CardDescription>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Chart</span>
+                  <select
+                    value={receivingChartType}
+                    onChange={(e) => setReceivingChartType(e.target.value as "radar" | "bar")}
+                    className={cn(
+                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-colors",
+                      "hover:border-violet-400/30 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
+                    )}
+                  >
+                    <option value="radar">Radar</option>
+                    <option value="bar">Bar</option>
+                  </select>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-5">
+                {loading ? (
+                  <Skeleton className="h-[320px] w-full rounded-xl" />
+                ) : receivingChartType === "radar" ? (
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RadarChart data={receivingRadarData} margin={{ top: 16, right: 24, left: 24, bottom: 16 }}>
+                        <PolarGrid stroke="var(--border)" strokeOpacity={0.6} />
+                        <PolarAngleAxis
+                          dataKey="subject"
+                          tick={{ fill: "var(--muted-foreground)", fontSize: 11, fontWeight: 500 }}
+                        />
+                        <PolarRadiusAxis
+                          angle={90}
+                          domain={[0, 10]}
+                          tick={false}
+                        />
+                        <Radar
+                          name="You (Receiving)"
+                          dataKey="value"
+                          stroke="#a78bfa"
+                          fill="#a78bfa"
+                          fillOpacity={0.35}
+                          strokeWidth={2}
+                        />
+                        {hasPartner && partnerReceiving && (
+                          <Radar
+                            name="Partner (Receiving)"
+                            dataKey="partnerValue"
+                            stroke="#c4b5fd"
+                            fill="#c4b5fd"
+                            fillOpacity={0.22}
+                            strokeWidth={2}
+                          />
+                        )}
+                        <Legend
+                          wrapperStyle={{ fontSize: 11 }}
+                          formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                        />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <div className="h-[320px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={buildBarData(receiving, partnerReceiving)}
+                        layout="vertical"
+                        margin={{ top: 8, right: 24, left: 56, bottom: 8 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
+                        <XAxis type="number" domain={[0, 10]} tick={false} axisLine={false} />
+                        <YAxis type="category" dataKey="subject" width={52} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }}
+                          labelStyle={{ color: "var(--foreground)" }}
+                          formatter={(value: number | undefined) => [value ?? 0, ""]}
+                          labelFormatter={(label) => label}
+                        />
+                        <Bar dataKey="you" name="You" fill="#a78bfa" fillOpacity={0.9} radius={[0, 6, 6, 0]} maxBarSize={28} />
+                        {hasPartner && partnerReceiving && (
+                          <Bar dataKey="partner" name="Partner" fill="#c4b5fd" fillOpacity={0.8} radius={[0, 6, 6, 0]} maxBarSize={28} />
+                        )}
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* Digital Garden */}

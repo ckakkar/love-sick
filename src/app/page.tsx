@@ -33,7 +33,7 @@ export default function LandingPage() {
       <div className="pointer-events-none absolute bottom-[20%] right-[-20%] h-[50vmax] w-[50vmax] rounded-full bg-[#2d2640]/60 blur-[100px]" />
       <div className="pointer-events-none absolute top-[50%] left-[-10%] h-[40vmax] w-[40vmax] rounded-full bg-[#7c3aed]/5 blur-[80px]" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-5xl flex-col px-6">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6">
         <header className="flex items-center justify-between py-6">
           <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground">
             Love Sick
@@ -45,8 +45,8 @@ export default function LandingPage() {
           </Link>
         </header>
 
-        <main className="flex flex-1 flex-col justify-center pb-20 pt-4 md:flex-row md:items-center md:gap-12 md:pb-24">
-          <div className="flex-1">
+        <main className="flex flex-1 flex-col justify-center pb-20 pt-4 md:flex-row md:items-center md:gap-8 md:pb-24">
+          <div className="min-w-0 flex-1 md:max-w-[420px]">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -98,29 +98,30 @@ export default function LandingPage() {
           </motion.div>
           </div>
 
-          {/* Auto-cycling feature cards */}
+          {/* Auto-cycling feature cards — right side takes more space */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.25, ease: [0.32, 0.72, 0, 1] }}
-            className="relative mt-16 min-h-[380px] w-full shrink-0 md:mt-0 md:min-h-[420px] md:max-w-[480px]"
+            className="relative mt-16 flex min-h-[420px] w-full shrink-0 md:mt-0 md:min-h-[480px] md:min-w-[min(100%,520px)] md:flex-1 md:basis-0"
           >
             <CardSwap
-              width={320}
-              height={280}
-              cardDistance={48}
-              verticalDistance={56}
+              width={400}
+              height={360}
+              cardDistance={56}
+              verticalDistance={64}
               delay={4500}
               pauseOnHover
               skewAmount={5}
               easing="elastic"
+              className="w-full"
             >
               {FEATURE_CARDS.map((card, i) => (
-                <Card key={i} className="flex flex-col justify-center p-6">
-                  <h3 className="font-serif text-lg font-semibold tracking-tight text-foreground">
+                <Card key={i} className="flex flex-col justify-center p-8">
+                  <h3 className="font-serif text-xl font-semibold tracking-tight text-foreground">
                     {card.title}
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                     {card.body}
                   </p>
                 </Card>
