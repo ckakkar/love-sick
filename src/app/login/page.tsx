@@ -1,24 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Mail } from "lucide-react";
+import { Mail, ArrowLeft } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 import { loginWithMagicLink } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type State = "idle" | "loading" | "success" | "error";
 
-export default function LoginPage() {
+function LoginForm() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/dashboard";
+
   const [state, setState] = useState<State>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<"google" | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
     const formData = new FormData(form);
     formData.set("origin", typeof window !== "undefined" ? window.location.origin : "");
+    formData.set("next", next);
 
     setState("loading");
     setErrorMessage(null);
@@ -34,80 +41,156 @@ export default function LoginPage() {
     setState("success");
   }
 
+  async function handleOAuth(provider: "google") {
+    setOauthLoading(provider);
+    const supabase = createClient();
+    const redirectTo = `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ""}`;
+    await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo },
+    });
+    setOauthLoading(null);
+  }
+
   return (
-    <div className="min-h-screen bg-background gradient-mesh flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className={cn(
-          "w-full max-w-md rounded-2xl border border-white/10 bg-card/80 p-8 shadow-2xl backdrop-blur-md",
-          "ring-1 ring-white/5"
-        )}
-      >
-        <p className="font-serif text-center text-sm uppercase tracking-widest text-muted-foreground">
-          Your Digital Key
-        </p>
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      <div className="pointer-events-none absolute -top-[30%] left-1/2 h-[60vmax] w-[60vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/8 blur-[120px]" />
+      <div className="pointer-events-none absolute bottom-[10%] right-[-10%] h-[40vmax] w-[40vmax] rounded-full bg-[#2d2640]/50 blur-[80px]" />
 
-        <div className="mt-6 flex justify-center">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="rounded-full bg-violet-500/20 p-4 ring-2 ring-violet-400/30"
+      <div className="relative z-10 flex min-h-screen flex-col">
+        <header className="flex items-center justify-between px-6 py-5">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Mail className="h-10 w-10 text-violet-400 drop-shadow-[0_0_8px_rgba(167,139,250,0.5)]" />
-          </motion.div>
-        </div>
-
-        <h1 className="mt-6 font-serif text-2xl font-semibold tracking-tight text-foreground text-center">
-          Enter the Garden.
-        </h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          No passwords to remember. Just a digital letter sent to your inbox.
-        </p>
-
-        {state === "success" ? (
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-6 rounded-lg border border-violet-500/20 bg-violet-500/10 px-4 py-3 text-center text-sm text-foreground"
-          >
-            It is on its way. Check your inbox for the magic link.
-          </motion.p>
-        ) : (
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <input
-              type="email"
-              name="email"
-              required
-              placeholder="Where should we send your invite?"
-              disabled={state === "loading"}
-              className={cn(
-                "w-full rounded-xl border border-white/10 bg-background/80 px-4 py-3 text-foreground placeholder:text-muted-foreground",
-                "focus:border-violet-400/50 focus:outline-none focus:ring-2 focus:ring-violet-400/20",
-                "disabled:opacity-60"
-              )}
-            />
-            {errorMessage && (
-              <p className="text-center text-sm text-destructive">{errorMessage}</p>
-            )}
-            <Button
-              type="submit"
-              disabled={state === "loading"}
-              className="w-full"
-            >
-              {state === "loading" ? "Sealing the envelope..." : "Send Letter"}
-            </Button>
-          </form>
-        )}
-
-        <p className="mt-6 text-center text-xs text-muted-foreground">
-          <Link href="/" className="underline underline-offset-2 hover:text-foreground">
-            Back home
+            <ArrowLeft className="h-4 w-4" />
+            Home
           </Link>
-        </p>
-      </motion.div>
+          <span className="font-serif text-lg font-semibold tracking-tight text-foreground">
+            Love Sick
+          </span>
+          <div className="w-16" />
+        </header>
+
+        <main className="flex flex-1 items-center justify-center px-6 pb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+            className="w-full max-w-[380px]"
+          >
+            <div className="rounded-3xl border border-border/60 bg-card/70 p-8 shadow-2xl shadow-violet-500/5 backdrop-blur-xl">
+              <div className="flex justify-center">
+                <div className="rounded-full bg-violet-500/10 p-3.5 ring-1 ring-violet-400/15">
+                  <Mail className="h-7 w-7 text-violet-300" />
+                </div>
+              </div>
+              <h1 className="mt-6 text-center font-serif text-2xl font-semibold leading-snug tracking-tight text-foreground">
+                Enter the garden
+              </h1>
+              <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
+                No passwords. We’ll send a link to your inbox.
+              </p>
+
+              {state === "success" ? (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="mt-6 rounded-2xl border border-violet-400/15 bg-violet-500/10 px-4 py-3 text-center text-sm text-foreground"
+                >
+                  Check your inbox for the link.
+                </motion.div>
+              ) : (
+                <>
+                  <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+                    <input type="hidden" name="next" value={next} />
+                    <input
+                      type="email"
+                      name="email"
+                      required
+                      placeholder="you@example.com"
+                      disabled={state === "loading"}
+                      className={cn(
+                        "w-full rounded-2xl border border-border bg-background/80 px-4 py-3.5 text-foreground placeholder:text-muted-foreground",
+                        "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20",
+                        "disabled:opacity-60"
+                      )}
+                    />
+                    {errorMessage && (
+                      <p className="text-center text-sm text-red-400">{errorMessage}</p>
+                    )}
+                    <Button
+                      type="submit"
+                      disabled={state === "loading"}
+                      className="w-full"
+                    >
+                      {state === "loading" ? "Sending…" : "Send magic link"}
+                    </Button>
+                  </form>
+
+                  <div className="mt-6 flex items-center gap-4">
+                    <span className="h-px flex-1 bg-border" />
+                    <span className="text-xs text-muted-foreground">or</span>
+                    <span className="h-px flex-1 bg-border" />
+                  </div>
+
+                  <div className="mt-6 flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => handleOAuth("google")}
+                      disabled={!!oauthLoading}
+                    >
+                      {oauthLoading === "google" ? (
+                        <span className="text-muted-foreground">Redirecting…</span>
+                      ) : (
+                        <>
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>
+                            <path
+                              fill="currentColor"
+                              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                            />
+                            <path
+                              fill="currentColor"
+                              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                            />
+                            <path
+                              fill="currentColor"
+                              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                            />
+                            <path
+                              fill="currentColor"
+                              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                            />
+                          </svg>
+                          Continue with Google
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageFallback />}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginPageFallback() {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-pulse rounded-full bg-violet-400/20" />
     </div>
   );
 }

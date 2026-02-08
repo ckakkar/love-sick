@@ -55,8 +55,8 @@ export function PrologueModal({
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="relative z-10 w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl"
+        transition={{ type: "spring", stiffness: 280, damping: 28 }}
+        className="relative z-10 w-full max-w-lg rounded-3xl border border-border/80 bg-card p-6 shadow-2xl shadow-violet-500/5"
       >
         <h2 className="font-serif text-xl font-semibold tracking-tight text-foreground">
           Data is meaningless without intent
@@ -68,7 +68,7 @@ export function PrologueModal({
           value={content}
           onChange={(e) => setContent(e.target.value)}
           placeholder="Why did you choose them? What do you want to build together?"
-          className="mt-4 min-h-[140px] w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-[var(--ring)] focus:outline-none focus:ring-2 focus:ring-[var(--ring)]/30"
+          className="mt-4 min-h-[140px] w-full resize-none rounded-2xl border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
           maxLength={600}
           rows={5}
         />

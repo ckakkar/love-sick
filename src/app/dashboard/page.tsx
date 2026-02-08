@@ -8,7 +8,17 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) redirect("/?signin=1");
+  if (!user) redirect("/login?next=/dashboard");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id, username, full_name, age, sex, notify_partner_online")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.username) {
+    redirect("/onboarding");
+  }
 
   const { data: assessments } = await supabase
     .from("assessments")
@@ -48,9 +58,19 @@ export default async function DashboardPage() {
       : null;
   }
 
-  const inviteCode = couples?.[0]?.invite_code ?? null;
-  const isInviter = couples?.[0]?.profile_a_id === user.id;
   const coupleId = couples?.[0]?.id ?? null;
+
+  let partnerRequests: { sent: { id: string; to_username: string | null; to_name: string | null; created_at: string }[]; received: { id: string; from_username: string | null; from_name: string | null; created_at: string }[] } = { sent: [], received: [] };
+  try {
+    const { data: list } = await supabase.rpc("get_partner_requests_with_usernames", { uid: user.id });
+    const rows = (list ?? []) as { direction: string; request_id: string; other_username: string | null; other_name: string | null; created_at: string }[];
+    partnerRequests = {
+      sent: rows.filter((r) => r.direction === "sent").map((r) => ({ id: r.request_id, to_username: r.other_username, to_name: r.other_name, created_at: r.created_at })),
+      received: rows.filter((r) => r.direction === "received").map((r) => ({ id: r.request_id, from_username: r.other_username, from_name: r.other_name, created_at: r.created_at })),
+    };
+  } catch {
+    // ignore
+  }
 
   let hasPrologue = false;
   if (partnerId) {
@@ -73,8 +93,10 @@ export default async function DashboardPage() {
       partnerId={partnerId ?? null}
       coupleId={coupleId}
       hasPrologue={hasPrologue}
-      inviteCode={inviteCode}
-      isInviter={isInviter}
+      partnerRequests={partnerRequests}
+      myUsername={profile?.username ?? null}
+      hasAssessment={!!myAssessment}
+      notifyPartnerOnline={profile?.notify_partner_online !== false}
     />
   );
 }

@@ -53,6 +53,9 @@ const DEFAULT_SCORES: LoveScores = {
   touch: 5,
 };
 
+type PartnerRequestSent = { id: string; to_username: string | null; to_name: string | null; created_at: string };
+type PartnerRequestReceived = { id: string; from_username: string | null; from_name: string | null; created_at: string };
+
 export function DashboardClient({
   myGiving,
   myReceiving,
@@ -62,8 +65,10 @@ export function DashboardClient({
   partnerId,
   coupleId,
   hasPrologue,
-  inviteCode,
-  isInviter,
+  partnerRequests,
+  myUsername,
+  hasAssessment,
+  notifyPartnerOnline = true,
 }: {
   myGiving: LoveScores | null;
   myReceiving: LoveScores | null;
@@ -73,8 +78,10 @@ export function DashboardClient({
   partnerId: string | null;
   coupleId: string | null;
   hasPrologue: boolean;
-  inviteCode: string | null;
-  isInviter: boolean;
+  partnerRequests: { sent: PartnerRequestSent[]; received: PartnerRequestReceived[] };
+  myUsername: string | null;
+  hasAssessment: boolean;
+  notifyPartnerOnline?: boolean;
 }) {
   const giving = myGiving ?? DEFAULT_SCORES;
   const receiving = myReceiving ?? DEFAULT_SCORES;
@@ -87,14 +94,15 @@ export function DashboardClient({
   const partnerOnline = usePartnerPresence(coupleId, partnerId);
   const prevOnlineRef = useRef(false);
   const showPrologueGate = hasPartner && partnerId && (!prologueUnlocked || dissolving);
+  const showPartnerOnlineToast = notifyPartnerOnline !== false;
 
   useEffect(() => {
-    if (partnerOnline && !prevOnlineRef.current && partnerId) {
-      setToast("She is here with you.");
+    if (showPartnerOnlineToast && partnerOnline && !prevOnlineRef.current && partnerId) {
+      setToast("Your partner is here with you.");
       setTimeout(() => setToast(null), 4000);
     }
     prevOnlineRef.current = partnerOnline;
-  }, [partnerOnline, partnerId]);
+  }, [showPartnerOnlineToast, partnerOnline, partnerId]);
 
   const handlePrologueUnlock = () => {
     setDissolving(true);
@@ -188,13 +196,30 @@ export function DashboardClient({
           animate="show"
           className="grid gap-6 lg:grid-cols-2"
         >
+          {!hasAssessment && (
+            <motion.div variants={cardItem} className="lg:col-span-2">
+              <Card className="border-violet-400/30 bg-violet-500/10">
+                <CardHeader>
+                  <CardTitle>Discover your love language</CardTitle>
+                  <CardDescription>
+                    Take a short assessment so we can show your fingerprint and compare with your partner.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href="/assess">
+                    <Button>Take the assessment</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
           {/* Radar */}
           <motion.div variants={cardItem}>
           <Card className="card-hover glass border-purple-500/10">
             <CardHeader>
               <CardTitle>The Fingerprint</CardTitle>
               <CardDescription>
-                Giving vs receiving — {hasPartner ? "You (purple) & partner (violet)" : "You"}
+                How you give love (filled) — {hasPartner ? "you vs partner (outline)" : "your scores 1–10"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -269,7 +294,7 @@ export function DashboardClient({
           <Card className="card-hover glass border-purple-500/10 lg:col-span-2">
             <CardHeader>
               <CardTitle>Intensity grid</CardTitle>
-              <CardDescription>Giving (row) vs receiving (column) — 1–10</CardDescription>
+              <CardDescription>How strongly you give (top row) and need to receive (bottom row) each language — 1 (low) to 10 (high)</CardDescription>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -402,15 +427,18 @@ export function DashboardClient({
               <CardTitle>Connect with your partner</CardTitle>
               <CardDescription>
                 {hasPartner
-                  ? "You’re linked. Only two people can connect at a time."
-                  : "Generate a link and send it to your partner. They sign in, take the assessment, and you can compare love languages."}
+                  ? "You’re linked. Only you and your partner can see each other — a private space for two."
+                  : "Send an invite using your partner’s username. Only two people can be linked at a time. They’ll see the request and can accept to link up."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <SyncPartnerCard
+              <PartnerInviteCard
                 hasPartner={hasPartner}
-                inviteCode={inviteCode}
-                isInviter={isInviter}
+                partnerRequests={partnerRequests}
+                myUsername={myUsername}
+                onAccept={() => window.location.reload()}
+                onDecline={() => window.location.reload()}
+                onSent={() => window.location.reload()}
               />
             </CardContent>
           </Card>
@@ -421,62 +449,141 @@ export function DashboardClient({
   );
 }
 
-function SyncPartnerCard({
+function PartnerInviteCard({
   hasPartner,
-  inviteCode,
-  isInviter,
+  partnerRequests,
+  myUsername,
+  onAccept,
+  onDecline,
+  onSent,
 }: {
   hasPartner: boolean;
-  inviteCode: string | null;
-  isInviter: boolean;
+  partnerRequests: { sent: PartnerRequestSent[]; received: PartnerRequestReceived[] };
+  myUsername: string | null;
+  onAccept: () => void;
+  onDecline: () => void;
+  onSent: () => void;
 }) {
-  const [code, setCode] = useState(inviteCode);
-  const [creating, setCreating] = useState(false);
-  const [alreadyLinkedError, setAlreadyLinkedError] = useState(false);
+  const [username, setUsername] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [acceptingId, setAcceptingId] = useState<string | null>(null);
+  const [decliningId, setDecliningId] = useState<string | null>(null);
 
-  const createInvite = async () => {
-    setCreating(true);
-    setAlreadyLinkedError(false);
-    const res = await fetch("/api/invite/create", { method: "POST" });
+  const handleSend = async () => {
+    const uname = username.trim();
+    if (!uname) return;
+    setSending(true);
+    setError(null);
+    const res = await fetch("/api/partner-invite/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: uname }),
+    });
     const data = await res.json().catch(() => ({}));
-    if (res.status === 409 && data.error === "already_linked") {
-      setAlreadyLinkedError(true);
-    } else if (data.code) {
-      setCode(data.code);
+    setSending(false);
+    if (res.ok) {
+      setUsername("");
+      onSent();
+    } else {
+      setError(data.error || "Could not send invite.");
     }
-    setCreating(false);
+  };
+
+  const handleAccept = async (requestId: string) => {
+    setAcceptingId(requestId);
+    const res = await fetch("/api/partner-invite/accept", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request_id: requestId }),
+    });
+    setAcceptingId(null);
+    if (res.ok) onAccept();
+  };
+
+  const handleDecline = async (requestId: string) => {
+    setDecliningId(requestId);
+    await fetch("/api/partner-invite/decline", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ request_id: requestId }),
+    });
+    setDecliningId(null);
+    onDecline();
   };
 
   return (
-    <div className="space-y-4">
-      {!hasPartner && (
-        <>
-          {alreadyLinkedError && (
-            <p className="rounded-lg bg-purple-500/10 px-3 py-2 text-sm text-[#c4b5fd]">
-              You’re already linked with a partner. Only two people can connect at a time.
-            </p>
-          )}
-          {code ? (
-            <div className="rounded-xl border border-purple-500/15 bg-muted/40 p-4">
-              <p className="mb-2 text-sm text-muted-foreground">Share this link with your partner so they can connect and compare love languages:</p>
-              <code className="block break-all rounded-lg bg-background/80 px-3 py-2 text-sm text-foreground ring-1 ring-purple-500/10">
-                {typeof window !== "undefined" ? `${window.location.origin}/invite?code=${code}` : `.../invite?code=${code}`}
-              </code>
-            </div>
-          ) : (
-            <Button onClick={createInvite} disabled={creating}>
-              {creating ? "Creating…" : "Generate link for partner"}
-            </Button>
-          )}
-        </>
-      )}
-      {hasPartner && isInviter && inviteCode && (
+    <div className="space-y-5">
+      {myUsername && (
         <p className="text-sm text-muted-foreground">
-          You’re linked. Share the link above if your partner needs it again.
+          Your username: <span className="font-medium text-foreground">@{myUsername}</span> — share it so your partner can send you an invite.
         </p>
       )}
-      {hasPartner && !isInviter && (
+      {hasPartner ? (
         <p className="text-sm text-muted-foreground">You’re linked with your partner. Compare your love languages above.</p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label htmlFor="partner-username" className="mb-1 block text-sm font-medium text-foreground">
+                Partner’s username
+              </label>
+              <input
+                id="partner-username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                placeholder="Enter their username"
+                className={cn(
+                  "w-full rounded-2xl border border-border bg-background/80 px-4 py-2.5 text-foreground placeholder:text-muted-foreground",
+                  "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                )}
+              />
+            </div>
+            <Button onClick={handleSend} disabled={sending || !username.trim()}>
+              {sending ? "Sending…" : "Send invite"}
+            </Button>
+          </div>
+          {error && <p className="text-sm text-red-400">{error}</p>}
+
+          {partnerRequests.received.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-sm font-medium text-foreground">Invite requests</h4>
+              <ul className="space-y-2">
+                {partnerRequests.received.map((r) => (
+                  <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/80 bg-muted/30 px-3 py-2">
+                    <span className="text-sm">
+                      <span className="font-medium text-foreground">@{r.from_username ?? "?"}</span>
+                      {r.from_name && <span className="text-muted-foreground"> · {r.from_name}</span>}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" onClick={() => handleDecline(r.id)} disabled={decliningId === r.id}>
+                        {decliningId === r.id ? "…" : "Decline"}
+                      </Button>
+                      <Button size="sm" onClick={() => handleAccept(r.id)} disabled={acceptingId === r.id}>
+                        {acceptingId === r.id ? "…" : "Accept"}
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {partnerRequests.sent.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-sm font-medium text-foreground">Pending invites (sent)</h4>
+              <ul className="space-y-1">
+                {partnerRequests.sent.map((r) => (
+                  <li key={r.id} className="text-sm text-muted-foreground">
+                    @{r.to_username ?? "?"}
+                    {r.to_name && ` · ${r.to_name}`} — waiting
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

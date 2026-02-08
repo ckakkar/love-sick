@@ -80,11 +80,12 @@ Copy `.env.example` to `.env.local` and fill in values.
    - **Magic link (OTP):** Built-in; ensure **Email** is enabled.
    - **OAuth (optional):** Under Authentication → Providers, enable **Google** and/or **GitHub** and add credentials if you use the login dialog on the landing page.
 
-3. **URL configuration**
-   - **Site URL:** Your production URL (e.g. `https://yourapp.com`).
-   - **Redirect URLs:** Add:
-     - `https://yourapp.com/auth/callback`
-     - `http://localhost:3000/auth/callback` (for local dev).
+3. **URL configuration** (critical for production OAuth)
+   - **Site URL:** Set to your **production** URL when deployed (e.g. `https://love-sick-tawny.vercel.app`). If this stays as `http://localhost:3000`, Google/GitHub sign-in will redirect users to localhost after auth.
+   - **Redirect URLs:** Add **both**:
+     - `https://your-production-domain.vercel.app/auth/callback` (or your real production URL)
+     - `http://localhost:3000/auth/callback` (for local dev)
+   - In Vercel (or your host), set `NEXT_PUBLIC_APP_URL` to that same production URL so the auth callback redirects to the correct domain.
 
 4. **Realtime (for Heartbeat Sync)**
    - Enable **Realtime** for the project (Dashboard → Database → Replication).
@@ -92,6 +93,8 @@ Copy `.env.example` to `.env.local` and fill in values.
 5. **Run migrations** in the SQL Editor, in order:
    - `supabase/migrations/001_schema.sql` — core tables, RLS, trigger, indexes.
    - `supabase/migrations/002_prologues_interactions.sql` — prologues and interactions.
+   - `supabase/migrations/003_profiles_username_partner_requests.sql` — profile username/name/age/sex, partner_requests table, get_user_id_by_username, get_partner_requests_with_usernames.
+   - `supabase/migrations/004_notifications_avatars.sql` — notification preferences (notify_partner_request, notify_partner_online), avatars storage bucket and RLS. If the bucket insert fails, create a public bucket `avatars` in Supabase Dashboard → Storage.
 
 ---
 
@@ -118,7 +121,8 @@ Open [http://localhost:3000](http://localhost:3000).
 | `/login` | Public | **Digital Letter** magic-link login: enter email, “Send Letter,” receive link in inbox. |
 | `/assess` | Public | Two-step love language assessment (giving / receiving), 1–10 sliders; saves to DB when logged in. |
 | `/dashboard` | Protected | Main app: Prologue gate (if linked and not yet written), then Radar, Digital Garden, heatmap, Sync with partner, AI insight. |
-| `/invite?code=xyz` | Public | Partner flow: sign in (or sign up via magic link), optionally take assessment, then link as partner. |
+| `/onboarding` | Protected | First-time: set username, name, age, sex. Required before dashboard. |
+| `/invite?code=xyz` | Public | Legacy link flow; partner linking is now via username from dashboard. |
 | `/auth/callback` | System | Handles OAuth and magic-link callback; exchanges code for session and redirects to `/dashboard` (or `?next=`). |
 
 ---
@@ -128,7 +132,7 @@ Open [http://localhost:3000](http://localhost:3000).
 ### Authentication
 
 - **Magic link (primary):** `/login` uses `signInWithOtp({ email })`; user receives a link that hits `/auth/callback` and signs them in.
-- **OAuth (optional):** Landing page can show a dialog for Google/GitHub via `signInWithOAuth`; same callback.
+- **OAuth (optional):** Google sign-in via `signInWithOAuth`; same callback.
 - **Session:** Supabase SSR middleware refreshes the session on each request; protected routes (e.g. dashboard layout) redirect unauthenticated users (e.g. to `/?signin=1` or `/login`).
 
 ### Assessment
@@ -149,7 +153,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Radar chart:** “The Fingerprint” — your giving scores (and partner’s if linked) on a spider chart (Recharts).
 - **Digital Garden:** Procedural plant (SVG + Framer Motion): roots depth = Touch, stem height = Time, leaf count = Words, flower color = Service (yellow) / Gifts (purple). **Pick a leaf:** click sends a “digital_leaf” interaction to the partner and shows a toast.
 - **Heatmap:** 5×5 grid of giving vs receiving intensity (violet/violet tints).
-- **Sync with partner:** Generate invite link (or show existing); only two people can connect at a time.
+- **Connect with partner:** Invite by username (friend-request style). Enter partner’s username to send invite; they see it under “Invite requests” and can Accept/Decline. New users are prompted to take the assessment first.
 - **AI insight (when linked):** “Generate insight” runs the dual-AI pipeline and shows a “Relationship Prescription” and three non-consumerist date ideas.
 
 ### Heartbeat Sync
@@ -157,11 +161,12 @@ Open [http://localhost:3000](http://localhost:3000).
 - **Realtime presence** on a channel per couple (`room:${coupleId}`).
 - **When partner is online:** Dashboard border glows amber (`sync-glow`), a heartbeat icon pulses in the header, and a toast appears: “She is here with you.”
 
-### Invite and partner link
+### Onboarding and partner invite (by username)
 
-- **Generate link:** From dashboard, user creates a couple row (if none) with a unique `invite_code`; shareable URL is `{origin}/invite?code=...`.
-- **Accept:** Partner opens link → sign in (magic link or OAuth) → can take assessment → accept flow links them as `profile_b_id` and sets couple status to active.
-- **Limit:** A user can only be in one couple (as A or B); attempts to create or accept a second link show an “already linked” message.
+- **First login:** If the profile has no username, user is redirected to `/onboarding` to set username, full name, age, and sex. These are stored on `profiles`.
+- **Invite by username:** From dashboard, user enters their partner's username and sends an invite. Partner sees the request under "Invite requests" and can Accept or Decline. Accepting creates the couple (profile_a = inviter, profile_b = acceptor).
+- **New users:** If the user has no assessment yet, the dashboard shows a prominent "Take the assessment" card.
+- **Limit:** A user can only be in one couple (as A or B). Legacy `/invite?code=...` is still supported.
 
 ### AI (Romantic Essentialist)
 
@@ -177,8 +182,9 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Table | Purpose |
 |-------|---------|
-| **profiles** | One row per `auth.users`; `display_name`, `avatar_url`, `bio`. Created by trigger on signup. |
-| **couples** | Links two users: `profile_a_id`, `profile_b_id` (nullable until partner joins), `status` (pending/active), `invite_code`, `anniversary_date`. |
+| **profiles** | One row per `auth.users`; `display_name`, `avatar_url`, `bio`, `username` (unique), `full_name`, `age`, `sex`. Created by trigger on signup; username/name/age/sex set in onboarding. |
+| **partner_requests** | Friend-request style: `from_user_id`, `to_user_id`, `status` (pending/accepted/rejected). Accepting creates a couple. |
+| **couples** | Links two users: `profile_a_id`, `profile_b_id`, `status` (pending/active), `invite_code` (legacy), `anniversary_date`. |
 | **assessments** | Per user: `giving_scores`, `receiving_scores` (JSONB: words, service, gifts, time, touch, 1–10), `created_at`. |
 | **invite_codes** | Optional table for one-time codes; invite code can also live on `couples.invite_code`. |
 | **prologues** | One row per (user, partner): `content` (150+ chars) to unlock dashboard for that couple. |
@@ -210,8 +216,13 @@ Open [http://localhost:3000](http://localhost:3000).
 | GET | `/auth/callback` | Exchanges `code` for session, redirects to `next` or `/dashboard`. |
 | POST | `/api/prologue` | Body: `{ content, partner_id }`. Ensures content ≥150 chars; upserts into `prologues`. |
 | POST | `/api/interactions` | Body: `{ type: "digital_leaf", partner_id }`. Inserts into `interactions`. |
-| POST | `/api/invite/create` | Creates or returns existing couple row with `invite_code` for current user (no second partner allowed). |
-| POST | `/api/invite/accept` | Body: `{ code }`. Links current user as partner for the couple with that code (fails if already in a couple). |
+| PATCH | `/api/profile` | Body: `{ username?, full_name?, age?, sex? }`. Update own profile (onboarding). |
+| POST | `/api/partner-invite/send` | Body: `{ username }`. Send partner invite by username. |
+| GET | `/api/partner-invite/list` | Returns `{ sent, received }` pending invites with usernames. |
+| POST | `/api/partner-invite/accept` | Body: `{ request_id }`. Accept invite and create couple. |
+| POST | `/api/partner-invite/decline` | Body: `{ request_id }`. Decline invite. |
+| POST | `/api/invite/create` | (Legacy) Creates couple row with `invite_code`. |
+| POST | `/api/invite/accept` | (Legacy) Body: `{ code }`. Links current user as partner via code. |
 
 ### Server actions
 
