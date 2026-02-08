@@ -9,7 +9,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.next({ request });
   }
 
-  let response = NextResponse.next({ request });
+  const response = NextResponse.next({ request });
 
   const supabase = createServerClient(url, key, {
     cookies: {

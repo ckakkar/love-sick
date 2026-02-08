@@ -6,10 +6,9 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
-  // Use canonical app URL in production so redirects never go to localhost
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (typeof request.url === "string" ? new URL(request.url).origin : "");
+  // Prefer request origin so localhost stays on localhost when debugging
+  const requestOrigin = typeof request.url === "string" ? new URL(request.url).origin : "";
+  const baseUrl = requestOrigin || process.env.NEXT_PUBLIC_APP_URL || "";
 
   if (code) {
     const supabase = await createClient();

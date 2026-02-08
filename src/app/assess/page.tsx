@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import * as Slider from "@radix-ui/react-slider";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -14,54 +13,12 @@ import {
 } from "@/types/assessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import ElasticSlider from "@/components/elastic-slider";
 
 const STEPS: { id: "giving" | "receiving"; title: string; subtitle: string }[] = [
   { id: "giving", title: "How you express love", subtitle: "Rate how naturally you show love in each way." },
   { id: "receiving", title: "How you need to receive love", subtitle: "Rate how important each is for you to feel loved." },
 ];
-
-function ScoreSlider({
-  value,
-  onChange,
-  label,
-  index,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  label: string;
-  index: number;
-}) {
-  const gradientProgress = value / 10;
-  return (
-    <div className="space-y-2">
-      <div className="flex justify-between text-sm">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-medium tabular-nums text-foreground">{value}</span>
-      </div>
-      <Slider.Root
-        className="relative flex h-8 w-full touch-none select-none items-center"
-        value={[value]}
-        onValueChange={([v]) => onChange(v)}
-        min={1}
-        max={10}
-        step={1}
-      >
-        <Slider.Track
-          className={cn(
-            "relative h-2.5 w-full grow overflow-hidden rounded-full transition-all duration-300"
-          )}
-          style={{
-            background: `linear-gradient(90deg, #2e2638 0%, #3b2d4a ${Math.max(0, (gradientProgress - 0.15) * 100)}%, #8b5cf6 ${gradientProgress * 100}%, #a78bfa 100%)`,
-          }}
-        >
-          <Slider.Range className="absolute h-full bg-transparent" />
-        </Slider.Track>
-        <Slider.Thumb className="block h-5 w-5 rounded-full border-2 border-[#8b5cf6] bg-background shadow-lg shadow-purple-500/30 transition-transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#8b5cf6] focus:ring-offset-2 focus:ring-offset-background" />
-      </Slider.Root>
-    </div>
-  );
-}
 
 export default function AssessPage() {
   const router = useRouter();
@@ -132,13 +89,18 @@ export default function AssessPage() {
                 <CardDescription className="text-base">{step.subtitle}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-8">
-                {LOVE_LANGUAGE_KEYS.map((key, i) => (
-                  <ScoreSlider
+                {LOVE_LANGUAGE_KEYS.map((key) => (
+                  <ElasticSlider
                     key={key}
                     label={LOVE_LANGUAGE_LABELS[key]}
                     value={scores[key]}
                     onChange={(v) => updateScore(key, v)}
-                    index={i}
+                    startingValue={1}
+                    maxValue={10}
+                    isStepped
+                    stepSize={1}
+                    leftIcon={<span className="text-lg">−</span>}
+                    rightIcon={<span className="text-lg">+</span>}
                   />
                 ))}
                 <div className="flex justify-between pt-4">

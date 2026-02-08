@@ -1,13 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import * as Avatar from "@radix-ui/react-avatar";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { createClient } from "@/lib/supabase/client";
-import { Settings, LayoutDashboard, LogOut, Bell } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Settings, LayoutDashboard, LogOut } from "lucide-react";
 
 export type DashboardProfile = {
   id: string;
@@ -27,7 +25,6 @@ export function DashboardShell({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const pathname = usePathname();
   const displayName = profile.full_name || profile.display_name || profile.username || "there";
 
   async function handleSignOut() {
@@ -44,31 +41,6 @@ export function DashboardShell({
           <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground">
             Love Sick
           </Link>
-
-          <nav className="flex items-center gap-2">
-            <Link
-              href="/dashboard"
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                pathname === "/dashboard"
-                  ? "bg-violet-500/15 text-foreground"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/settings"
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                pathname === "/dashboard/settings"
-                  ? "bg-violet-500/15 text-foreground"
-                  : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-              )}
-            >
-              Settings
-            </Link>
-          </nav>
 
           <div className="flex items-center gap-3">
             <DropdownMenu.Root>

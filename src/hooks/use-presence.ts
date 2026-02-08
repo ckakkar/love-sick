@@ -8,7 +8,7 @@ export function usePartnerPresence(roomId: string | null, partnerId: string | nu
 
   useEffect(() => {
     if (!roomId || !partnerId) {
-      setPartnerOnline(false);
+      queueMicrotask(() => setPartnerOnline(false));
       return;
     }
 

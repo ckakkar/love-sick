@@ -28,8 +28,10 @@ export function InviteClient({
   useEffect(() => {
     if (invalid) return;
     if (isLoggedIn && isPartner) {
-      setLinking(true);
-      setAlreadyLinkedError(false);
+      queueMicrotask(() => {
+        setLinking(true);
+        setAlreadyLinkedError(false);
+      });
       fetch("/api/invite/accept", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

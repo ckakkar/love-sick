@@ -15,11 +15,7 @@ import {
   Legend,
 } from "recharts";
 import Link from "next/link";
-import {
-  LOVE_LANGUAGE_KEYS,
-  LOVE_LANGUAGE_LABELS,
-  type LoveScores,
-} from "@/types/assessment";
+import { LOVE_LANGUAGE_KEYS, type LoveScores } from "@/types/assessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
