@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { getCoupleInsight, getSoloInsight } from "@/app/actions/insight";
 import { PrologueModal } from "@/components/prologue-modal";
@@ -31,6 +32,7 @@ import { WeathervaneCard } from "@/components/dashboard/weathervane-card";
 import { TimeDifferenceCard } from "@/components/dashboard/time-difference-card";
 import { StreakCounterCard } from "@/components/dashboard/streak-counter-card";
 import { usePartnerPresence } from "@/hooks/use-presence";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 
 const LABELS_SHORT: Record<string, string> = {
@@ -129,6 +131,7 @@ export function DashboardClient({
   const [prologueUnlocked, setPrologueUnlocked] = useState(hasPrologue);
   const [dissolving, setDissolving] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const router = useRouter();
   const partnerOnline = usePartnerPresence(coupleId, partnerId);
   const prevOnlineRef = useRef(false);
   const showPrologueGate = hasPartner && partnerId && (!prologueUnlocked || dissolving);
@@ -173,7 +176,7 @@ export function DashboardClient({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-border/80 bg-card/95 px-4 py-2.5 text-sm shadow-xl shadow-violet-500/10 backdrop-blur-xl"
+          className="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-border/80 bg-card/95 px-4 py-2.5 text-sm shadow-xl shadow-violet-500/10 backdrop-blur-xl safe-area-bottom"
         >
           {toast}
         </motion.div>
@@ -200,18 +203,23 @@ export function DashboardClient({
       )}
 
       <div className="pointer-events-none fixed left-1/2 top-0 h-96 w-[600px] -translate-x-1/2 rounded-full bg-[#7c3aed]/12 blur-[100px]" />
-      <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 mx-auto max-w-7xl px-3 py-5 sm:px-6 sm:py-8"
+      >
         <motion.header
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-10 flex items-center justify-between"
+          className="mb-6 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-center sm:justify-between"
         >
-          <div>
-            <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Dashboard</h1>
-            <p className="text-muted-foreground">Understand each other’s love language</p>
+          <div className="min-w-0">
+            <h1 className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Dashboard</h1>
+            <p className="text-sm text-muted-foreground sm:text-base">Understand each other’s love language</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
             {partnerOnline && (
               <motion.span
                 animate={{ scale: [1, 1.15, 1] }}
@@ -278,9 +286,9 @@ export function DashboardClient({
           {/* Fingerprint — Radar or Bar (large) */}
           <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
             <Card className="card-hover overflow-hidden border border-border/60 bg-card/80 shadow-lg shadow-violet-500/5 backdrop-blur-sm">
-              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-border/40 pb-4">
-                <div>
-                  <CardTitle className="font-serif text-lg tracking-tight">The Fingerprint</CardTitle>
+              <CardHeader className="flex flex-col gap-3 border-b border-border/40 pb-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0">
+                  <CardTitle className="font-serif text-base tracking-tight sm:text-lg">The Fingerprint</CardTitle>
                   <CardDescription className="mt-1 text-xs text-muted-foreground">
                     How you give love — {hasPartner ? "you vs partner" : "your scores"}
                   </CardDescription>
@@ -300,11 +308,11 @@ export function DashboardClient({
                   </select>
                 </div>
               </CardHeader>
-              <CardContent className="pt-5">
+              <CardContent className="pt-4 sm:pt-5">
                 {loading ? (
-                  <Skeleton className="h-[320px] w-full rounded-xl" />
+                  <Skeleton className="h-[240px] w-full rounded-xl sm:h-[320px]" />
                 ) : fingerprintChartType === "radar" ? (
-                  <div className="h-[320px] w-full">
+                  <div className="h-[240px] w-full sm:h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={radarData} margin={{ top: 16, right: 24, left: 24, bottom: 16 }}>
                         <PolarGrid stroke="var(--border)" strokeOpacity={0.6} />
@@ -344,7 +352,7 @@ export function DashboardClient({
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="h-[320px] w-full">
+                  <div className="h-[240px] w-full sm:h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={buildBarData(giving, partnerGiving)}
@@ -390,9 +398,9 @@ export function DashboardClient({
           {/* Receiving — Radar or Bar (large) */}
           <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
             <Card className="card-hover overflow-hidden h-full border border-border/60 bg-card/80 shadow-lg shadow-violet-500/5 backdrop-blur-sm">
-              <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-border/40 pb-4">
-                <div>
-                  <CardTitle className="font-serif text-lg tracking-tight">How you need to receive love</CardTitle>
+              <CardHeader className="flex flex-col gap-3 border-b border-border/40 pb-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+                <div className="min-w-0">
+                  <CardTitle className="font-serif text-base tracking-tight sm:text-lg">How you need to receive love</CardTitle>
                   <CardDescription className="mt-1 text-xs text-muted-foreground">
                     What makes you feel loved — {hasPartner ? "you vs partner" : "your scores"}
                   </CardDescription>
@@ -412,11 +420,11 @@ export function DashboardClient({
                   </select>
                 </div>
               </CardHeader>
-              <CardContent className="pt-5">
+              <CardContent className="pt-4 sm:pt-5">
                 {loading ? (
-                  <Skeleton className="h-[320px] w-full rounded-xl" />
+                  <Skeleton className="h-[240px] w-full rounded-xl sm:h-[320px]" />
                 ) : receivingChartType === "radar" ? (
-                  <div className="h-[320px] w-full">
+                  <div className="h-[240px] w-full sm:h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={receivingRadarData} margin={{ top: 16, right: 24, left: 24, bottom: 16 }}>
                         <PolarGrid stroke="var(--border)" strokeOpacity={0.6} />
@@ -456,7 +464,7 @@ export function DashboardClient({
                     </ResponsiveContainer>
                   </div>
                 ) : (
-                  <div className="h-[320px] w-full">
+                  <div className="h-[240px] w-full sm:h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
                         data={buildBarData(receiving, partnerReceiving)}
@@ -569,6 +577,7 @@ export function DashboardClient({
                         variant="outline"
                         size="sm"
                         className="mt-2 border-violet-400/30 text-violet-200 hover:bg-violet-500/10"
+                        disabled={soloInsightLoading}
                         onClick={async () => {
                           setSoloInsightLoading(true);
                           try {
@@ -579,24 +588,39 @@ export function DashboardClient({
                           }
                         }}
                       >
-                        Regenerate insight
+                        {soloInsightLoading ? (
+                          <>
+                            <LoadingSpinner className="h-3 w-3 border-2" />
+                            Regenerating…
+                          </>
+                        ) : (
+                          "Regenerate insight"
+                        )}
                       </Button>
                     </div>
                   ) : (
-                    <Button
-                      className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-400 hover:to-purple-500 hover:shadow-violet-500/30"
-                      onClick={async () => {
-                        setSoloInsightLoading(true);
-                        try {
-                          const result = await getSoloInsight(giving, receiving);
-                          setSoloInsight(result);
-                        } finally {
-                          setSoloInsightLoading(false);
-                        }
-                      }}
-                    >
-                      Get my insights
-                    </Button>
+                  <Button
+                    className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-400 hover:to-purple-500 hover:shadow-violet-500/30"
+                    disabled={soloInsightLoading}
+                    onClick={async () => {
+                      setSoloInsightLoading(true);
+                      try {
+                        const result = await getSoloInsight(giving, receiving);
+                        setSoloInsight(result);
+                      } finally {
+                        setSoloInsightLoading(false);
+                      }
+                    }}
+                  >
+                    {soloInsightLoading ? (
+                      <>
+                        <LoadingSpinner className="h-3.5 w-3.5 border-2 border-white/50 border-t-white" />
+                        Getting insights…
+                      </>
+                    ) : (
+                      "Get my insights"
+                    )}
+                  </Button>
                   )}
                 </CardContent>
               </Card>
@@ -711,6 +735,7 @@ export function DashboardClient({
                   </div>
                 ) : (
                   <Button
+                    disabled={insightLoading}
                     onClick={async () => {
                       setInsightLoading(true);
                       try {
@@ -726,7 +751,14 @@ export function DashboardClient({
                       }
                     }}
                   >
-                    Generate insight
+                    {insightLoading ? (
+                      <>
+                        <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                        Generating insight…
+                      </>
+                    ) : (
+                      "Generate insight"
+                    )}
                   </Button>
                 )}
               </CardContent>
@@ -750,15 +782,15 @@ export function DashboardClient({
                 hasPartner={hasPartner}
                 partnerRequests={partnerRequests}
                 myUsername={myUsername}
-                onAccept={() => window.location.reload()}
-                onDecline={() => window.location.reload()}
-                onSent={() => window.location.reload()}
+                onAccept={() => router.refresh()}
+                onDecline={() => router.refresh()}
+                onSent={() => router.refresh()}
               />
             </CardContent>
           </Card>
           </motion.div>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -781,6 +813,7 @@ function PartnerInviteCard({
   const [username, setUsername] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [decliningId, setDecliningId] = useState<string | null>(null);
 
@@ -805,14 +838,23 @@ function PartnerInviteCard({
   };
 
   const handleAccept = async (requestId: string) => {
+    setAcceptError(null);
     setAcceptingId(requestId);
-    const res = await fetch("/api/partner-invite/accept", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ request_id: requestId }),
-    });
-    setAcceptingId(null);
-    if (res.ok) onAccept();
+    try {
+      const res = await fetch("/api/partner-invite/accept", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_id: requestId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        onAccept();
+      } else {
+        setAcceptError(data.error || "Could not accept invite.");
+      }
+    } finally {
+      setAcceptingId(null);
+    }
   };
 
   const handleDecline = async (requestId: string) => {
@@ -855,10 +897,18 @@ function PartnerInviteCard({
               />
             </div>
             <Button onClick={handleSend} disabled={sending || !username.trim()}>
-              {sending ? "Sending…" : "Send invite"}
+              {sending ? (
+                <>
+                  <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                  Sending…
+                </>
+              ) : (
+                "Send invite"
+              )}
             </Button>
           </div>
           {error && <p className="text-sm text-red-400">{error}</p>}
+          {acceptError && <p className="text-sm text-red-400">{acceptError}</p>}
 
           {partnerRequests.received.length > 0 && (
             <div>
@@ -872,10 +922,21 @@ function PartnerInviteCard({
                     </span>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => handleDecline(r.id)} disabled={decliningId === r.id}>
-                        {decliningId === r.id ? "…" : "Decline"}
+                        {decliningId === r.id ? (
+                          <LoadingSpinner className="h-3 w-3 border-2" />
+                        ) : (
+                          "Decline"
+                        )}
                       </Button>
                       <Button size="sm" onClick={() => handleAccept(r.id)} disabled={acceptingId === r.id}>
-                        {acceptingId === r.id ? "…" : "Accept"}
+                        {acceptingId === r.id ? (
+                          <>
+                            <LoadingSpinner className="h-3 w-3 border-2" />
+                            Accepting…
+                          </>
+                        ) : (
+                          "Accept"
+                        )}
                       </Button>
                     </div>
                   </li>

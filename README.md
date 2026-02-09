@@ -117,78 +117,104 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Route | Access | Description |
 |-------|--------|-------------|
-| `/` | Public | Landing page; “Get Started” can open OAuth dialog or link to `/login`. |
-| `/login` | Public | **Digital Letter** magic-link login: enter email, “Send Letter,” receive link in inbox. |
-| `/assess` | Public | Two-step love language assessment (giving / receiving), 1–10 sliders; saves to DB when logged in. |
-| `/dashboard` | Protected | Main app: Prologue gate (if linked and not yet written), then Radar, Digital Garden, heatmap, Sync with partner, AI insight. |
-| `/onboarding` | Protected | First-time: set username, name, age, sex. Required before dashboard. |
-| `/invite?code=xyz` | Public | Legacy link flow; partner linking is now via username from dashboard. |
+| `/` | Public | Landing page; hero, auto-cycling feature cards, “What you get” grid; Sign in → `/login`. |
+| `/login` | Public | “Enter the garden” — Google OAuth or magic link; redirects to `/dashboard` or `?next=`. |
+| `/assess` | Public | Two-step love language assessment (giving / receiving), 1–10 elastic sliders; saves to DB when logged in. |
+| `/dashboard` | Protected | Bento grid: Prologue gate (if linked, unwritten), then Weathervane, Time Difference, Streak, Partner presence, Fingerprint (radar/bar), Receiving (radar/bar), Digital Garden, Intensity grid, Connect with partner, AI insight (couple or solo). |
+| `/dashboard/settings` | Protected | Profile photo upload, profile (username, name, age, sex), notification preferences (partner invite, partner online). |
+| `/onboarding` | Protected | First-time: 4-step stepper — username, name, age, sex. Required before dashboard. |
+| `/invite?code=xyz` | Public | Legacy invite link; if logged in and is partner, accept and redirect; else “Sign in to join” with login dialog. |
 | `/auth/callback` | System | Handles OAuth and magic-link callback; exchanges code for session and redirects to `/dashboard` (or `?next=`). |
 
 ---
 
 ## Features
 
+### Landing page
+
+- **Hero:** Tagline “Know how you love. See how you match.” with gradient mesh background and soft ambient glows.
+- **Auto-cycling feature cards (CardSwap):** Four cards (Five love languages, Your fingerprint, Digital garden, AI that gets you) cycle with a 3D stack animation; responsive sizing for mobile and desktop.
+- **What you get:** Grid summary (five languages, fingerprint + gap analysis, AI insights); responsive 1–3 columns.
+- **Sign in:** Links to `/login`; optional OAuth dialog from landing.
+
 ### Authentication
 
-- **Magic link (primary):** `/login` uses `signInWithOtp({ email })`; user receives a link that hits `/auth/callback` and signs them in.
-- **OAuth (optional):** Google sign-in via `signInWithOAuth`; same callback.
-- **Session:** Supabase SSR middleware refreshes the session on each request; protected routes (e.g. dashboard layout) redirect unauthenticated users (e.g. to `/?signin=1` or `/login`).
+- **Magic link (primary):** `/login` — “Enter the garden” — uses `signInWithOtp({ email })`; user receives a link that hits `/auth/callback` and signs them in.
+- **OAuth (optional):** Google sign-in via `signInWithOAuth`; same callback. Can be triggered from landing or invite flow via `LoginDialog`.
+- **Session:** Supabase SSR middleware refreshes the session on each request; protected routes (e.g. dashboard layout) redirect unauthenticated users to `/login` or `/?signin=1`.
+
+### Onboarding
+
+- **First login:** If the profile has no username, user is redirected to `/onboarding`.
+- **Stepper (4 steps):** (1) Choose username (letters, numbers, underscores, hyphens; partner uses this to send invite), (2) Full name, (3) Age (optional), (4) Sex (optional). Stored on `profiles`.
+- **Validation:** Username ≥ 3 characters; name required; age 1–120 if provided.
 
 ### Assessment
 
 - **Steps:** “How you express love” (giving) and “How you need to receive love” (receiving).
 - **Dimensions:** Words of Affirmation, Acts of Service, Receiving Gifts, Quality Time, Physical Touch (each 1–10).
-- **UI:** Sliders with violet gradient feedback; step indicator; Framer Motion transitions.
+- **UI:** Elastic sliders with violet gradient, step indicator, Framer Motion transitions; responsive layout and touch-friendly.
 - **Storage:** Latest assessment per user is stored in `assessments` (giving_scores, receiving_scores as JSONB).
 
-### Prologue (unlock gate)
+### Dashboard (bento grid, responsive)
 
-- **When:** If the user has a linked partner and has not yet submitted a prologue for that partner, the dashboard is covered by a blurred overlay and a modal.
-- **Prompt:** “Data is meaningless without intent. To unlock your compatibility profile, write at least 150 characters about why you chose this person.”
-- **Flow:** User submits → `POST /api/prologue` → row in `prologues` → overlay fades out over 1.5s and dashboard is revealed.
+- **Prologue gate:** If the user has a linked partner and has not yet submitted a prologue, the dashboard is covered by a blurred overlay and a modal. Prompt: “Data is meaningless without intent” — write ≥ 150 characters about why you chose this person. Submit → `POST /api/prologue` → overlay fades out and dashboard is revealed.
+- **Take the assessment card:** Shown when the user has no assessment; links to `/assess`.
+- **Weathervane card:** Placeholder for “your location vs partner’s” weather (concept card).
+- **Time Difference card:** Placeholder for time-zone or “time together” (concept card).
+- **Streak counter card:** Placeholder for engagement streak (concept card).
+- **Partner presence card (when linked):** Heart icon and “Partner here / away” using Heartbeat Sync.
+- **The Fingerprint:** Your giving scores (and partner’s if linked) — **Radar** or **Bar** chart toggle (Recharts); responsive height.
+- **How you need to receive love:** Same radar/bar toggle for receiving scores; you vs partner when linked.
+- **Digital Garden:** Procedural plant (SVG + Framer Motion): roots depth = Touch, stem height = Time, leaf count = Words, flower color = Service (yellow) / Gifts (purple). **Pick a leaf** to send a “digital_leaf” interaction to your partner; toast: “Leaf sent to your partner.”
+- **Intensity grid (heatmap):** 5×2 table — giving (top row) and receiving (bottom row) per love language (1–10); violet intensity shading.
+- **Connect with your partner:** Invite by username. Your username is shown so you can share it; enter partner’s username to send invite. Partner sees “Invite requests” and can Accept/Decline. Pending (sent) invites listed. Accepting creates the couple.
+- **AI insight (when linked, both have assessments):** “Generate insight” runs the dual-AI pipeline and shows a “Relationship Prescription” and three non-consumerist date ideas.
+- **Solo AI insights (when not linked, has assessment):** “Get my insights” runs a solo pipeline: personal prescription and three ideas for self-love and readiness to love others; “Regenerate insight” to refresh.
 
-### Dashboard (after unlock or when no partner)
+### Heartbeat Sync (realtime presence)
 
-- **Radar chart:** “The Fingerprint” — your giving scores (and partner’s if linked) on a spider chart (Recharts).
-- **Digital Garden:** Procedural plant (SVG + Framer Motion): roots depth = Touch, stem height = Time, leaf count = Words, flower color = Service (yellow) / Gifts (purple). **Pick a leaf:** click sends a “digital_leaf” interaction to the partner and shows a toast.
-- **Heatmap:** 5×5 grid of giving vs receiving intensity (violet/violet tints).
-- **Connect with partner:** Invite by username (friend-request style). Enter partner’s username to send invite; they see it under “Invite requests” and can Accept/Decline. New users are prompted to take the assessment first.
-- **AI insight (when linked):** “Generate insight” runs the dual-AI pipeline and shows a “Relationship Prescription” and three non-consumerist date ideas.
+- **Channel:** One presence channel per couple: `room:${coupleId}` (Supabase Realtime).
+- **When partner is online:** Dashboard border glows amber (`sync-glow`), heartbeat icon pulses in header and in the partner card, toast: “Your partner is here with you.”
 
-### Heartbeat Sync
+### Settings (`/dashboard/settings`)
 
-- **Realtime presence** on a channel per couple (`room:${coupleId}`).
-- **When partner is online:** Dashboard border glows amber (`sync-glow`), a heartbeat icon pulses in the header, and a toast appears: “She is here with you.”
+- **Profile photo:** Upload avatar (JPEG, PNG, GIF, WebP; max 2MB). Stored in Supabase Storage bucket `avatars`; visible to partner when linked.
+- **Profile:** Edit username, full name, age, sex (same as onboarding).
+- **Notifications:** Toggles for “Partner invite requests” and “Partner is online” (Heartbeat Sync). Stored on `profiles` as `notify_partner_request`, `notify_partner_online`. Save profile or “Save notification preferences” to apply.
 
-### Onboarding and partner invite (by username)
+### Invite flow (legacy and username)
 
-- **First login:** If the profile has no username, user is redirected to `/onboarding` to set username, full name, age, and sex. These are stored on `profiles`.
-- **Invite by username:** From dashboard, user enters their partner's username and sends an invite. Partner sees the request under "Invite requests" and can Accept or Decline. Accepting creates the couple (profile_a = inviter, profile_b = acceptor).
-- **New users:** If the user has no assessment yet, the dashboard shows a prominent "Take the assessment" card.
-- **Limit:** A user can only be in one couple (as A or B). Legacy `/invite?code=...` is still supported.
+- **By username (primary):** From dashboard, send invite by partner’s username; partner accepts/declines from dashboard.
+- **Legacy link:** `/invite?code=xyz` — if logged in and is the intended partner, auto-accepts and can redirect to assess or dashboard; if not logged in, shows “Sign in to join” with login dialog.
 
 ### AI (Romantic Essentialist)
 
-- **Analyst (DeepSeek):** Consumes both partners’ giving/receiving scores; returns top variances and a “love deficit” style summary; forbidden from consumerist suggestions.
-- **Coach (OpenAI):** Turns that analysis into a short, witty “Relationship Prescription” and exactly three actionable, non-consumerist ideas (e.g. handwritten letter, blanket fort, custom playlist).
-- **Trigger:** “Generate insight” button on dashboard when both partners have assessments.
+- **Couple insight (when linked):** Analyst (DeepSeek) consumes both partners’ giving/receiving scores; returns variances and summary. Coach (OpenAI) produces a “Relationship Prescription” and three non-consumerist ideas (e.g. handwritten letter, blanket fort, custom playlist).
+- **Solo insight (no partner):** Personal prescription and three ideas for self-growth and readiness to love; same anti-consumerist stance.
+- **Fallbacks:** If DeepSeek or OpenAI keys are missing, fallback responses are used.
 
 ---
 
 ## Database schema
 
-### Tables (after both migrations)
+### Tables (after all migrations)
 
 | Table | Purpose |
 |-------|---------|
-| **profiles** | One row per `auth.users`; `display_name`, `avatar_url`, `bio`, `username` (unique), `full_name`, `age`, `sex`. Created by trigger on signup; username/name/age/sex set in onboarding. |
+| **profiles** | One row per `auth.users`; `display_name`, `avatar_url`, `bio`, `username` (unique), `full_name`, `age`, `sex`, `notify_partner_request`, `notify_partner_online`. Created by trigger on signup; username/name/age/sex set in onboarding; notification prefs and avatar in settings. |
 | **partner_requests** | Friend-request style: `from_user_id`, `to_user_id`, `status` (pending/accepted/rejected). Accepting creates a couple. |
 | **couples** | Links two users: `profile_a_id`, `profile_b_id`, `status` (pending/active), `invite_code` (legacy), `anniversary_date`. |
 | **assessments** | Per user: `giving_scores`, `receiving_scores` (JSONB: words, service, gifts, time, touch, 1–10), `created_at`. |
 | **invite_codes** | Optional table for one-time codes; invite code can also live on `couples.invite_code`. |
 | **prologues** | One row per (user, partner): `content` (150+ chars) to unlock dashboard for that couple. |
 | **interactions** | E.g. `type: 'digital_leaf'` when user “sends a leaf” to partner; used for toasts/activity. |
+
+### Storage
+
+| Bucket | Purpose |
+|--------|---------|
+| **avatars** | Profile photos; public read; authenticated users upload/update/delete only their own (path: `{user_id}/...`). Max 2MB; JPEG, PNG, GIF, WebP. |
 
 ### Row-level security (RLS)
 
@@ -216,7 +242,9 @@ Open [http://localhost:3000](http://localhost:3000).
 | GET | `/auth/callback` | Exchanges `code` for session, redirects to `next` or `/dashboard`. |
 | POST | `/api/prologue` | Body: `{ content, partner_id }`. Ensures content ≥150 chars; upserts into `prologues`. |
 | POST | `/api/interactions` | Body: `{ type: "digital_leaf", partner_id }`. Inserts into `interactions`. |
-| PATCH | `/api/profile` | Body: `{ username?, full_name?, age?, sex? }`. Update own profile (onboarding). |
+| GET | `/api/profile` | Returns current user’s profile (username, full_name, age, sex, avatar_url, notify_*). |
+| PATCH | `/api/profile` | Body: `{ username?, full_name?, age?, sex?, notify_partner_request?, notify_partner_online? }`. Update own profile. |
+| POST | `/api/profile/avatar` | Multipart: `avatar` (file). Uploads to `avatars` bucket, updates `profiles.avatar_url`. |
 | POST | `/api/partner-invite/send` | Body: `{ username }`. Send partner invite by username. |
 | GET | `/api/partner-invite/list` | Returns `{ sent, received }` pending invites with usernames. |
 | POST | `/api/partner-invite/accept` | Body: `{ request_id }`. Accept invite and create couple. |
@@ -229,20 +257,21 @@ Open [http://localhost:3000](http://localhost:3000).
 | Action | File | Description |
 |--------|------|-------------|
 | `loginWithMagicLink(formData)` | `app/actions/auth.ts` | Reads `email` and `origin`; calls `supabase.auth.signInWithOtp` with `emailRedirectTo: ${origin}/auth/callback`. |
-| `getCoupleInsight(...)` | `app/actions/insight.ts` | Calls `generateCoupleInsight` (DeepSeek + OpenAI) and returns analyst + coach result for dashboard. |
+| `getCoupleInsight(...)` | `app/actions/insight.ts` | Calls `generateCoupleInsight` (DeepSeek + OpenAI); returns coach result for dashboard. |
+| `getSoloInsight(giving, receiving)` | `app/actions/insight.ts` | Calls `generateSoloInsight`; returns personal prescription + three ideas for users without a partner. |
 
 ---
 
 ## Design system
 
 - **Theme:** “Purple Heart” / Deep Electric Violet; dark by default.
-- **Background:** `slate-950` (`#020617`).
-- **Primary:** `violet-600` (`#7c3aed`).
-- **Accent / deep:** Deep purple tones (`#2e1065`, `#1e1b4b`).
-- **Sync state only:** Amber `#fbbf24` for Heartbeat Sync border/glow.
+- **Background:** Deep base (`#0a0812`); foreground `#f8f6ff` (soft lavender-white).
+- **Primary:** Violet (`#a78bfa`); card/secondary tones in `globals.css`.
+- **Sync state only:** Amber `--sync-glow` for Heartbeat Sync border/glow.
 - **Typography:** Serif (Playfair Display) for headings; Geist Sans for body.
 - **CSS variables:** Defined in `app/globals.css` and wired via Tailwind `@theme inline` (e.g. `--color-background`, `--font-serif`).
-- **Utilities:** `.glass` (backdrop blur + border), `.gradient-mesh` (violet radial gradients), `.card-hover` (lift + shadow on hover), `.sync-glow` (amber glow), `.font-serif` for headings.
+- **Utilities:** `.glass` (backdrop blur + border), `.gradient-mesh` (violet radial gradients), `.card-hover` (lift + shadow on hover), `.sync-glow` (amber glow), `.font-serif` for headings, `.dashboard-bg` (aurora + noise).
+- **Responsive:** Viewport meta and safe-area support; bento grid 1 col (mobile) → 2 col (tablet) → 4 col (desktop); charts, cards, and modals scale for small laptops and phones.
 
 ---
 
@@ -258,44 +287,60 @@ love-sick/
 ├── src/
 │   ├── app/
 │   │   ├── actions/
-│   │   │   ├── auth.ts          # loginWithMagicLink
-│   │   │   └── insight.ts      # getCoupleInsight
+│   │   │   ├── auth.ts              # loginWithMagicLink
+│   │   │   └── insight.ts           # getCoupleInsight, getSoloInsight
 │   │   ├── api/
 │   │   │   ├── interactions/route.ts
 │   │   │   ├── invite/accept/route.ts
 │   │   │   ├── invite/create/route.ts
+│   │   │   ├── partner-invite/accept/route.ts
+│   │   │   ├── partner-invite/decline/route.ts
+│   │   │   ├── partner-invite/list/route.ts
+│   │   │   ├── partner-invite/send/route.ts
+│   │   │   ├── profile/avatar/route.ts
+│   │   │   ├── profile/route.ts      # GET, PATCH
 │   │   │   └── prologue/route.ts
 │   │   ├── assess/page.tsx
 │   │   ├── auth/callback/route.ts
 │   │   ├── dashboard/
-│   │   │   ├── dashboard-client.tsx
-│   │   │   ├── layout.tsx      # protected, redirect if no user
-│   │   │   └── page.tsx
-│   │   ├── invite/
-│   │   │   ├── invite-client.tsx
-│   │   │   └── page.tsx
-│   │   ├── login/page.tsx      # Digital Letter magic link
+│   │   │   ├── dashboard-client.tsx # bento grid, charts, garden, partner invite, AI
+│   │   │   ├── layout.tsx           # protected, DashboardShell
+│   │   │   ├── page.tsx
+│   │   │   └── settings/page.tsx    # profile photo, profile, notifications
+│   │   ├── invite/invite-client.tsx, page.tsx
+│   │   ├── login/page.tsx
+│   │   ├── onboarding/layout.tsx, page.tsx
 │   │   ├── globals.css
 │   │   ├── layout.tsx
-│   │   └── page.tsx            # landing
+│   │   └── page.tsx                  # landing, CardSwap
 │   ├── components/
-│   │   ├── auth/login-dialog.tsx
+│   │   ├── auth/login-dialog.tsx    # OAuth (Google) dialog
+│   │   ├── card-swap.tsx            # auto-cycling 3D cards
+│   │   ├── dashboard/
+│   │   │   ├── streak-counter-card.tsx
+│   │   │   ├── time-difference-card.tsx
+│   │   │   └── weathervane-card.tsx
+│   │   ├── dashboard-shell.tsx      # header, avatar, nav, sign out
 │   │   ├── digital-garden.tsx
+│   │   ├── elastic-slider.tsx       # assessment sliders
 │   │   ├── prologue-modal.tsx
-│   │   └── ui/ (button, card, skeleton)
+│   │   ├── stepper.tsx              # onboarding steps
+│   │   ├── ui/ (button, card, skeleton, sex-selector)
+│   │   └── ...
 │   ├── hooks/
-│   │   └── use-presence.ts    # Supabase Realtime partner presence
+│   │   └── use-presence.ts           # Supabase Realtime partner presence
 │   ├── lib/
-│   │   ├── ai/insight.ts       # generateCoupleInsight (DeepSeek + OpenAI)
+│   │   ├── ai/insight.ts             # generateCoupleInsight, generateSoloInsight
 │   │   ├── supabase/client.ts, server.ts, middleware.ts
-│   │   └── utils.ts            # cn()
-│   ├── middleware.ts         # Supabase session refresh
+│   │   └── utils.ts                  # cn()
 │   └── types/
-│       └── assessment.ts      # LoveScores, keys, labels
+│       └── assessment.ts            # LoveScores, keys, labels
 └── supabase/
     └── migrations/
         ├── 001_schema.sql
-        └── 002_prologues_interactions.sql
+        ├── 002_prologues_interactions.sql
+        ├── 003_profiles_username_partner_requests.sql
+        └── 004_notifications_avatars.sql
 ```
 
 ---

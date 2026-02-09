@@ -13,6 +13,7 @@ import {
 } from "@/types/assessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import ElasticSlider from "@/components/elastic-slider";
 
 const STEPS: { id: "giving" | "receiving"; title: string; subtitle: string }[] = [
@@ -71,7 +72,7 @@ export default function AssessPage() {
   return (
     <div className="min-h-screen bg-background gradient-mesh">
       <div className="pointer-events-none absolute left-1/2 top-20 h-64 w-[500px] -translate-x-1/2 rounded-full bg-[#8b5cf6]/15 blur-[80px]" />
-      <div className="relative mx-auto max-w-2xl px-6 py-16">
+      <div className="relative mx-auto max-w-2xl px-4 py-8 sm:px-6 sm:py-16">
         <AnimatePresence mode="wait">
           <motion.div
             key={step.id}
@@ -114,15 +115,21 @@ export default function AssessPage() {
                         setStepIndex((i) => i - 1);
                       }
                     }}
+                    disabled={submitting}
                   >
                     Back
                   </Button>
                   <Button onClick={handleNext} disabled={submitting} className="w-full sm:w-auto sm:min-w-[140px]">
-                    {stepIndex < STEPS.length - 1
-                      ? "Next"
-                      : submitting
-                        ? "Saving…"
-                        : "See my dashboard"}
+                    {submitting ? (
+                      <>
+                        <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                        {stepIndex < STEPS.length - 1 ? "Next" : "Saving…"}
+                      </>
+                    ) : stepIndex < STEPS.length - 1 ? (
+                      "Next"
+                    ) : (
+                      "See my dashboard"
+                    )}
                   </Button>
                 </div>
               </CardContent>

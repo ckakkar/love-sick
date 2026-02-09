@@ -25,6 +25,13 @@ export const metadata: Metadata = {
     "For two people: rate love languages, unlock with words, grow a digital garden, and get anti-consumerist AI insights on how to love each other.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -33,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} min-h-screen antialiased page-enter`}
+        className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} min-h-screen antialiased page-enter min-w-0 overflow-x-hidden`}
       >
         {children}
       </body>

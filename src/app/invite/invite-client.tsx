@@ -7,6 +7,7 @@ import Link from "next/link";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export function InviteClient({
   code,
@@ -121,10 +122,10 @@ export function InviteClient({
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="flex flex-col items-center gap-4 text-center"
         >
-          <div className="h-10 w-10 animate-pulse rounded-full border-2 border-violet-400/30 bg-violet-500/10" />
+          <LoadingSpinner className="h-10 w-10 border-2 border-violet-400/30 border-t-violet-400" />
           <p className="text-sm text-muted-foreground">Connecting you with your partner…</p>
         </motion.div>
       </div>

@@ -64,7 +64,7 @@ export default function OnboardingPage() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-background gradient-mesh">
       <div className="pointer-events-none absolute -top-[30%] left-1/2 h-[65vmax] w-[65vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/10 blur-[140px]" />
-      <div className="relative z-10 flex min-h-screen flex-col py-12">
+      <div className="relative z-10 flex min-h-screen flex-col px-4 py-6 sm:px-6 sm:py-12">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}

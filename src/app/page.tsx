@@ -33,8 +33,8 @@ export default function LandingPage() {
       <div className="pointer-events-none absolute bottom-[15%] right-[-15%] h-[55vmax] w-[55vmax] rounded-full bg-[#2d2640]/50 blur-[120px]" />
       <div className="pointer-events-none absolute top-[45%] left-[-8%] h-[45vmax] w-[45vmax] rounded-full bg-[#7c3aed]/6 blur-[100px]" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6">
-        <header className="flex items-center justify-between py-6 sm:py-8">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-4 sm:px-6">
+        <header className="flex items-center justify-between py-4 sm:py-6 md:py-8">
           <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground transition-opacity hover:opacity-90">
             Love Sick
           </Link>
@@ -61,7 +61,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-8 font-serif text-4xl font-semibold leading-[1.15] tracking-tight text-foreground sm:text-5xl md:text-6xl"
+            className="mt-6 font-serif text-3xl font-semibold leading-[1.15] tracking-tight text-foreground sm:mt-8 sm:text-4xl md:text-5xl lg:text-6xl"
           >
             Know how you love.
             <br />
@@ -72,7 +72,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 max-w-md text-base leading-[1.65] text-muted-foreground"
+            className="mt-4 max-w-md text-sm leading-[1.65] text-muted-foreground sm:mt-6 sm:text-base"
           >
             For the two of you: five love languages, a shared dashboard, and AI that suggests ways to grow together — without the usual “buy this” noise.
           </motion.p>
@@ -81,9 +81,9 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
+            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:mt-10"
           >
-            <Button size="lg" asChild className="group min-w-[180px] shadow-lg shadow-violet-500/20">
+            <Button size="lg" asChild className="group w-full min-w-0 shadow-lg shadow-violet-500/20 sm:min-w-[180px] sm:w-auto">
               <Link href="/login">
                 Begin
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
@@ -103,11 +103,11 @@ export default function LandingPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.25, ease: [0.32, 0.72, 0, 1] }}
-            className="relative mt-16 flex min-h-[420px] w-full shrink-0 md:mt-0 md:min-h-[480px] md:min-w-[min(100%,520px)] md:flex-1 md:basis-0"
+            className="relative mt-12 flex min-h-[320px] w-full shrink-0 sm:min-h-[380px] md:mt-0 md:min-h-[420px] lg:min-h-[480px] md:min-w-[min(100%,520px)] md:flex-1 md:basis-0"
           >
             <CardSwap
-              width={400}
-              height={360}
+              width="min(100%, 400px)"
+              height={320}
               cardDistance={56}
               verticalDistance={64}
               delay={4500}
@@ -117,11 +117,11 @@ export default function LandingPage() {
               className="w-full"
             >
               {FEATURE_CARDS.map((card, i) => (
-                <Card key={i} className="flex flex-col justify-center p-8 glass border-violet-500/10 shadow-xl shadow-violet-500/5">
-                  <h3 className="font-serif text-xl font-semibold tracking-tight text-foreground">
+                <Card key={i} className="flex flex-col justify-center p-5 glass border-violet-500/10 shadow-xl shadow-violet-500/5 sm:p-6 md:p-8">
+                  <h3 className="font-serif text-lg font-semibold tracking-tight text-foreground sm:text-xl">
                     {card.title}
                   </h3>
-                  <p className="mt-3 text-base leading-[1.6] text-muted-foreground">
+                  <p className="mt-2 text-sm leading-[1.6] text-muted-foreground sm:mt-3 sm:text-base">
                     {card.body}
                   </p>
                 </Card>
@@ -139,7 +139,7 @@ export default function LandingPage() {
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
             What you get
           </p>
-          <ul className="mt-5 grid gap-5 text-sm sm:grid-cols-3">
+          <ul className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
               {[
                 "Five languages — words, service, gifts, time, touch",
                 "Your fingerprint — radar and gap analysis with your partner",

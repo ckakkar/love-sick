@@ -2,9 +2,12 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import * as Avatar from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { SexSelector } from "@/components/ui/sex-selector";
 import { cn } from "@/lib/utils";
 import { User, UserCircle, Calendar } from "lucide-react";
@@ -29,6 +32,7 @@ export default function SettingsPage() {
     notify_partner_online: true,
   });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +40,7 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    setProfileLoading(true);
     fetch("/api/profile")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -52,7 +57,8 @@ export default function SettingsPage() {
           if (d.avatar_url) setAvatarUrl(d.avatar_url);
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setProfileLoading(false));
   }, []);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,8 +121,29 @@ export default function SettingsPage() {
     "focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:bg-background/80 hover:border-violet-400/30 hover:bg-muted/40"
   );
 
+  if (profileLoading) {
+    return (
+      <div className="relative mx-auto max-w-2xl px-3 py-6 sm:px-4 sm:py-8">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-32 rounded-lg" />
+          <Skeleton className="h-4 w-full max-w-md" />
+        </div>
+        <div className="mt-10 space-y-8">
+          <Skeleton className="h-48 w-full rounded-xl" />
+          <Skeleton className="h-64 w-full rounded-xl" />
+          <Skeleton className="h-56 w-full rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="relative mx-auto max-w-2xl px-4 py-8">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="relative mx-auto max-w-2xl px-3 py-6 sm:px-4 sm:py-8"
+    >
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-violet-500/5 to-transparent" />
       <div className="relative">
         <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
@@ -150,7 +177,14 @@ export default function SettingsPage() {
                 onClick={() => fileInputRef.current?.click()}
                 disabled={avatarLoading}
               >
-                {avatarLoading ? "Uploading…" : "Change photo"}
+                {avatarLoading ? (
+                  <>
+                    <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                    Uploading…
+                  </>
+                ) : (
+                  "Change photo"
+                )}
               </Button>
               <p className="text-xs text-muted-foreground">JPEG, PNG, GIF or WebP. Max 2MB.</p>
             </div>
@@ -220,7 +254,16 @@ export default function SettingsPage() {
               </div>
               {error && <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
               {success && <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Profile saved.</p>}
-              <Button type="submit" disabled={loading}>{loading ? "Saving…" : "Save profile"}</Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? (
+                  <>
+                    <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                    Saving…
+                  </>
+                ) : (
+                  "Save profile"
+                )}
+              </Button>
             </form>
           </CardContent>
         </Card>
@@ -274,12 +317,19 @@ export default function SettingsPage() {
               }}
               disabled={loading}
             >
-              Save notification preferences
+              {loading ? (
+                <>
+                  <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                  Saving…
+                </>
+              ) : (
+                "Save notification preferences"
+              )}
             </Button>
           </CardContent>
         </Card>
       </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

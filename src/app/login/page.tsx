@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -69,7 +70,10 @@ function LoginForm() {
                   disabled={!!oauthLoading}
                 >
                   {oauthLoading === "google" ? (
-                    <span className="text-muted-foreground">Redirecting…</span>
+                    <>
+                      <LoadingSpinner className="h-4 w-4 border-2" />
+                      <span className="text-muted-foreground">Redirecting…</span>
+                    </>
                   ) : (
                     <>
                       <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden>

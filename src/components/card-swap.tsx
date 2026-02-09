@@ -238,11 +238,11 @@ const CardSwap: React.FC<CardSwapProps> = ({
     <div
       ref={container}
       className={`absolute inset-0 flex items-center justify-center overflow-visible perspective-[900px] md:justify-end md:pr-4 ${className}`}
-      style={{ width: "100%", height: "100%", minHeight: 420 }}
+      style={{ width: "100%", height: "100%", minHeight: 320 }}
     >
       <div
-        className="relative origin-center md:origin-bottom-right"
-        style={{ width, height, minHeight: 360 }}
+        className="relative origin-center md:origin-bottom-right min-h-[280px] sm:min-h-[320px] md:min-h-[360px]"
+        style={{ width, height }}
       >
         {rendered}
       </div>

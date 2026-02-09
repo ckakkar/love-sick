@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { cn } from "@/lib/utils";
 
 const MIN_CHARS = 150;
@@ -48,15 +49,16 @@ export function PrologueModal({
     >
       <div
         className={cn(
-          "absolute inset-0 bg-background/80 backdrop-blur-xl",
-          "prologue-overlay"
+          "absolute inset-0 bg-background/80 backdrop-blur-xl transition-opacity duration-300",
+          submitting && "cursor-wait opacity-90"
         )}
+        aria-hidden
       />
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 28 }}
-        className="relative z-10 w-full max-w-lg rounded-3xl border border-border/80 bg-card p-6 shadow-2xl shadow-violet-500/5"
+        className="relative z-10 w-full max-w-lg rounded-3xl border border-border/80 bg-card p-4 shadow-2xl shadow-violet-500/5 sm:p-6 max-h-[90vh] overflow-y-auto"
       >
         <h2 className="font-serif text-xl font-semibold tracking-tight text-foreground">
           Data is meaningless without intent
@@ -88,7 +90,14 @@ export function PrologueModal({
           disabled={!valid || submitting}
           className="mt-4 w-full"
         >
-          {submitting ? "Unlocking…" : "Unlock my profile"}
+          {submitting ? (
+            <>
+              <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+              Unlocking…
+            </>
+          ) : (
+            "Unlock my profile"
+          )}
         </Button>
       </motion.div>
     </motion.div>

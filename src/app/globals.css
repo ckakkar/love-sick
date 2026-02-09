@@ -167,10 +167,37 @@ a:not([class]):hover {
   animation: shimmer 1.8s ease-in-out infinite;
 }
 
+/* Loading states: gentle pulse for skeletons and spinners */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.animate-pulse-soft {
+  animation: pulse-soft 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin {
+  animation: spin 0.85s linear infinite;
+}
+
 *:focus-visible {
   outline: none;
   box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgba(167, 139, 250, 0.35);
   transition: box-shadow 0.3s var(--ease-out-expo);
+}
+
+/* Safe area for notches / home indicators on phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-inset {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
 }
 
 /* Smoother scroll and selection */
@@ -219,7 +246,7 @@ a:not([class]):hover {
   50% { background-position: 100% 50%; opacity: 0.95; }
 }
 
-/* Bento grid — dense masonry-style layout */
+/* Bento grid — dense masonry-style layout, responsive */
 .bento-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -227,22 +254,49 @@ a:not([class]):hover {
   gap: 0.875rem;
   grid-auto-flow: dense;
 }
+@media (max-width: 767px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(100px, auto);
+    gap: 0.75rem;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(120px, auto);
+    gap: 0.75rem;
+  }
+}
 @media (max-width: 1023px) {
   .bento-grid {
     grid-template-columns: 1fr;
     grid-auto-rows: minmax(120px, auto);
   }
+  .bento-cell.row-span-2 {
+    grid-row: span 1;
+    min-height: 0;
+  }
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bento-cell.row-span-2 {
+    grid-row: span 2;
+    min-height: 280px;
+  }
 }
 .bento-cell {
   min-height: 0;
+  min-width: 0;
 }
 .bento-cell.row-span-2 {
   grid-row: span 2;
   min-height: 320px;
 }
-@media (max-width: 1023px) {
+@media (max-width: 767px) {
   .bento-cell.row-span-2 {
-    grid-row: span 1;
-    min-height: 0;
+    min-height: 260px;
   }
 }

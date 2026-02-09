@@ -37,7 +37,7 @@ export function DashboardShell({
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur-xl supports-backdrop-filter:bg-background/80">
-        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6">
           <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground">
             Love Sick
           </Link>
@@ -47,7 +47,7 @@ export function DashboardShell({
               <DropdownMenu.Trigger asChild>
                 <button
                   type="button"
-                  className="flex items-center gap-2 rounded-full outline-none ring-violet-400 focus:ring-2"
+                  className="flex min-h-[44px] min-w-[44px] items-center gap-2 rounded-full py-2 pl-1 pr-2 outline-none ring-violet-400 focus:ring-2 sm:pr-3"
                   aria-label="Open menu"
                 >
                   <Avatar.Root className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-border bg-muted ring-2 ring-transparent transition hover:border-violet-400/40">
@@ -60,7 +60,7 @@ export function DashboardShell({
                       {(displayName === "there" ? "?" : displayName).charAt(0).toUpperCase()}
                     </Avatar.Fallback>
                   </Avatar.Root>
-                  <span className="max-w-[120px] truncate text-left text-sm font-medium text-foreground sm:max-w-[180px]">
+                  <span className="hidden max-w-[120px] truncate text-left text-sm font-medium text-foreground sm:block sm:max-w-[180px]">
                     Hi, {displayName}
                   </span>
                 </button>
