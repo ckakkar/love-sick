@@ -5,14 +5,9 @@ import { useRouter } from "next/navigation";
 import * as Avatar from "@radix-ui/react-avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SexSelector } from "@/components/ui/sex-selector";
 import { cn } from "@/lib/utils";
-
-const SEX_OPTIONS = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
-] as const;
+import { User, UserCircle, Calendar } from "lucide-react";
 
 type ProfileForm = {
   username: string;
@@ -115,15 +110,22 @@ export default function SettingsPage() {
     }
   };
 
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
-      <p className="mt-1 text-sm text-muted-foreground">Manage your profile and preferences. Only you and your partner can see your linked profile.</p>
+  const inputClass = cn(
+    "w-full rounded-2xl border-2 border-border/60 bg-muted/30 px-4 py-3.5 text-foreground placeholder:text-muted-foreground transition-all duration-200",
+    "focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:bg-background/80 hover:border-violet-400/30 hover:bg-muted/40"
+  );
 
-      <div className="mt-8 space-y-8">
-        <Card className="border-border/80">
+  return (
+    <div className="relative mx-auto max-w-2xl px-4 py-8">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-violet-500/5 to-transparent" />
+      <div className="relative">
+        <h1 className="font-serif text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Manage your profile and preferences. Only you and your partner can see your linked profile.</p>
+
+      <div className="mt-10 space-y-8">
+        <Card className="card-hover border-border/60 bg-card/80 shadow-lg shadow-violet-500/5">
           <CardHeader>
-            <CardTitle>Profile photo</CardTitle>
+            <CardTitle className="font-serif">Profile photo</CardTitle>
             <CardDescription>Your display picture — visible to your partner when linked.</CardDescription>
           </CardHeader>
           <CardContent className="flex items-center gap-6">
@@ -155,15 +157,18 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/80">
+        <Card className="card-hover border-border/60 bg-card/80 shadow-lg shadow-violet-500/5">
           <CardHeader>
-            <CardTitle>Profile</CardTitle>
+            <CardTitle className="font-serif">Profile</CardTitle>
             <CardDescription>Your name and username — your partner finds you by username.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="username" className="mb-1 block text-sm font-medium text-foreground">Username</label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-violet-400" />
+                  <label htmlFor="username" className="text-sm font-medium text-foreground">Username</label>
+                </div>
                 <input
                   id="username"
                   type="text"
@@ -172,28 +177,28 @@ export default function SettingsPage() {
                   placeholder="e.g. alex_loves"
                   minLength={3}
                   maxLength={30}
-                  className={cn(
-                    "w-full rounded-2xl border border-border bg-background/80 px-4 py-3 text-foreground placeholder:text-muted-foreground",
-                    "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                  )}
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label htmlFor="full_name" className="mb-1 block text-sm font-medium text-foreground">Full name</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <UserCircle className="h-4 w-4 text-violet-400" />
+                  <label htmlFor="full_name" className="text-sm font-medium text-foreground">Full name</label>
+                </div>
                 <input
                   id="full_name"
                   type="text"
                   value={form.full_name}
                   onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
                   placeholder="How should we call you?"
-                  className={cn(
-                    "w-full rounded-2xl border border-border bg-background/80 px-4 py-3 text-foreground placeholder:text-muted-foreground",
-                    "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                  )}
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label htmlFor="age" className="mb-1 block text-sm font-medium text-foreground">Age</label>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-violet-400" />
+                  <label htmlFor="age" className="text-sm font-medium text-foreground">Age</label>
+                </div>
                 <input
                   id="age"
                   type="number"
@@ -202,39 +207,27 @@ export default function SettingsPage() {
                   value={form.age}
                   onChange={(e) => setForm((f) => ({ ...f, age: e.target.value }))}
                   placeholder="Optional"
-                  className={cn(
-                    "w-full rounded-2xl border border-border bg-background/80 px-4 py-3 text-foreground placeholder:text-muted-foreground",
-                    "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                  )}
+                  className={inputClass}
                 />
               </div>
-              <div>
-                <label htmlFor="sex" className="mb-1 block text-sm font-medium text-foreground">Sex</label>
-                <select
-                  id="sex"
-                  value={form.sex}
-                  onChange={(e) => setForm((f) => ({ ...f, sex: e.target.value }))}
-                  className={cn(
-                    "w-full rounded-2xl border border-border bg-background/80 px-4 py-3 text-foreground",
-                    "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
-                  )}
-                >
-                  <option value="">Optional</option>
-                  {SEX_OPTIONS.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
-                </select>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4 text-violet-400" />
+                  <label htmlFor="sex" className="text-sm font-medium text-foreground">Sex</label>
+                  <span className="text-xs text-muted-foreground">(Optional)</span>
+                </div>
+                <SexSelector value={form.sex} onChange={(v) => setForm((f) => ({ ...f, sex: v }))} />
               </div>
-              {error && <p className="text-sm text-red-400">{error}</p>}
-              {success && <p className="text-sm text-green-500">Profile saved.</p>}
+              {error && <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
+              {success && <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Profile saved.</p>}
               <Button type="submit" disabled={loading}>{loading ? "Saving…" : "Save profile"}</Button>
             </form>
           </CardContent>
         </Card>
 
-        <Card className="border-border/80">
+        <Card className="card-hover border-border/60 bg-card/80 shadow-lg shadow-violet-500/5">
           <CardHeader>
-            <CardTitle>Notifications</CardTitle>
+            <CardTitle className="font-serif">Notifications</CardTitle>
             <CardDescription>Choose when you want to be notified. Only you and your partner are linked — no one else sees your data.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -285,6 +278,7 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

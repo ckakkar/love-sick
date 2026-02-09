@@ -83,6 +83,39 @@ h1, h2, h3, h4, .heading-serif {
   font-family: var(--font-serif), Georgia, serif;
 }
 
+/* Consistent input styling */
+.input-base {
+  width: 100%;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: rgba(30, 27, 40, 0.8);
+  padding: 0.75rem 1rem;
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-base::placeholder {
+  color: var(--muted-foreground);
+}
+.input-base:hover {
+  border-color: rgba(167, 139, 250, 0.2);
+}
+.input-base:focus {
+  outline: none;
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.2);
+}
+
+/* Link hover — subtle */
+a:not([class]) {
+  color: var(--primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+a:not([class]):hover {
+  color: var(--chart-2);
+}
+
 /* Glassmorphism — soft, modern */
 .glass {
   background: rgba(18, 16, 26, 0.72);

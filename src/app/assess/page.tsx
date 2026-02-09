@@ -81,14 +81,14 @@ export default function AssessPage() {
             transition={{ type: "spring", stiffness: 320, damping: 32 }}
           >
             <Card className="card-hover glass border-border/60 border-violet-500/10 shadow-xl shadow-violet-500/10">
-              <CardHeader>
-                <p className="text-xs font-medium uppercase tracking-wider text-[#a78bfa]/80">
+              <CardHeader className="space-y-2">
+                <p className="text-xs font-medium uppercase tracking-wider text-violet-400/90">
                   Step {stepIndex + 1} of 2
                 </p>
-                <CardTitle className="text-2xl">{step.title}</CardTitle>
-                <CardDescription className="text-base">{step.subtitle}</CardDescription>
+                <CardTitle className="text-2xl sm:text-3xl font-semibold tracking-tight">{step.title}</CardTitle>
+                <CardDescription className="text-base leading-relaxed">{step.subtitle}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-8">
+              <CardContent className="space-y-8 pt-2">
                 {LOVE_LANGUAGE_KEYS.map((key) => (
                   <ElasticSlider
                     key={key}
@@ -103,15 +103,21 @@ export default function AssessPage() {
                     rightIcon={<span className="text-lg">+</span>}
                   />
                 ))}
-                <div className="flex justify-between pt-4">
+                <div className="flex flex-col-reverse gap-3 pt-6 sm:flex-row sm:justify-between sm:pt-4">
                   <Button
                     variant="outline"
-                    onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
-                    disabled={stepIndex === 0}
+                    className="sm:min-w-[100px]"
+                    onClick={() => {
+                      if (stepIndex === 0) {
+                        router.back();
+                      } else {
+                        setStepIndex((i) => i - 1);
+                      }
+                    }}
                   >
                     Back
                   </Button>
-                  <Button onClick={handleNext} disabled={submitting}>
+                  <Button onClick={handleNext} disabled={submitting} className="w-full sm:w-auto sm:min-w-[140px]">
                     {stepIndex < STEPS.length - 1
                       ? "Next"
                       : submitting

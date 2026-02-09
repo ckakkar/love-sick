@@ -34,12 +34,12 @@ export default function LandingPage() {
       <div className="pointer-events-none absolute top-[45%] left-[-8%] h-[45vmax] w-[45vmax] rounded-full bg-[#7c3aed]/6 blur-[100px]" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6">
-        <header className="flex items-center justify-between py-6">
-          <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground">
+        <header className="flex items-center justify-between py-6 sm:py-8">
+          <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground transition-opacity hover:opacity-90">
             Love Sick
           </Link>
           <Link href="/login">
-            <Button variant="ghost" size="sm" className="text-muted-foreground transition-colors duration-300 hover:text-foreground">
+            <Button variant="ghost" size="sm" className="text-muted-foreground transition-colors duration-200 hover:text-foreground hover:bg-violet-500/10">
               Sign in
             </Button>
           </Link>
@@ -91,7 +91,7 @@ export default function LandingPage() {
             </Button>
             <Link
               href="/assess"
-              className="text-sm text-muted-foreground underline-offset-4 transition-colors duration-300 hover:text-foreground"
+              className="text-sm text-muted-foreground underline-offset-4 transition-colors duration-200 hover:text-foreground"
             >
               Take the assessment first →
             </Link>
@@ -145,7 +145,7 @@ export default function LandingPage() {
                 "Your fingerprint — radar and gap analysis with your partner",
                 "AI insights — how to grow together, not what to buy",
               ].map((line, i) => (
-                <li key={i} className="leading-relaxed text-muted-foreground">
+                <li key={i} className="leading-relaxed text-muted-foreground pl-4 border-l-2 border-violet-500/20">
                   {line}
                 </li>
               ))}

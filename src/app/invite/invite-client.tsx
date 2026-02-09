@@ -57,9 +57,9 @@ export function InviteClient({
   if (invalid) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background gradient-mesh p-6">
-        <Card className="glass max-w-md border-purple-500/10">
+        <Card className="card-hover glass max-w-md border-border/60 border-violet-500/10 shadow-xl shadow-violet-500/10">
           <CardHeader>
-            <CardTitle>Invalid or used link</CardTitle>
+            <CardTitle className="font-serif">Invalid or used link</CardTitle>
             <CardDescription>
               This invite link is invalid or has already been used.
             </CardDescription>
@@ -77,9 +77,9 @@ export function InviteClient({
   if (!isLoggedIn) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background gradient-mesh p-6">
-        <Card className="glass max-w-md border-purple-500/10">
+        <Card className="card-hover glass max-w-md border-border/60 border-violet-500/10 shadow-xl shadow-violet-500/10">
           <CardHeader>
-            <CardTitle>Sign in to join</CardTitle>
+            <CardTitle className="font-serif">Sign in to join</CardTitle>
             <CardDescription>
               Your partner invited you. Sign in, take the assessment, and you’ll be able to compare your love languages and learn how to love each other better.
             </CardDescription>
@@ -98,9 +98,9 @@ export function InviteClient({
   if (alreadyLinkedError) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background gradient-mesh p-6">
-        <Card className="glass max-w-md border-purple-500/10">
+        <Card className="card-hover glass max-w-md border-border/60 border-violet-500/10 shadow-xl shadow-violet-500/10">
           <CardHeader>
-            <CardTitle>Already linked</CardTitle>
+            <CardTitle className="font-serif">Already linked</CardTitle>
             <CardDescription>
               You’re already linked with a partner. Only two people can connect at a time. Go to your dashboard to view your comparison.
             </CardDescription>
@@ -119,11 +119,13 @@ export function InviteClient({
     return (
       <div className="flex min-h-screen items-center justify-center bg-background gradient-mesh p-6">
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center text-muted-foreground"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex flex-col items-center gap-4 text-center"
         >
-          Connecting you with your partner…
+          <div className="h-10 w-10 animate-pulse rounded-full border-2 border-violet-400/30 bg-violet-500/10" />
+          <p className="text-sm text-muted-foreground">Connecting you with your partner…</p>
         </motion.div>
       </div>
     );

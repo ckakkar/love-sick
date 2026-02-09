@@ -69,7 +69,7 @@ export function DashboardShell({
                 <DropdownMenu.Content
                   align="end"
                   sideOffset={8}
-                  className="min-w-[200px] rounded-xl border border-border/80 bg-card/95 p-1 shadow-xl shadow-violet-500/5 backdrop-blur-xl"
+                  className="z-[100] min-w-[200px] rounded-xl border border-border/80 bg-card/95 p-1 shadow-xl shadow-violet-500/5 backdrop-blur-xl"
                 >
                   <div className="border-b border-border/80 px-3 py-2">
                     <p className="truncate text-sm font-medium text-foreground">{displayName}</p>

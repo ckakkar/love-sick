@@ -34,7 +34,7 @@ function LoginForm() {
         <header className="flex items-center justify-between px-6 py-5">
           <Link
             href="/"
-            className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-violet-500/10 hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
             Home
@@ -52,15 +52,15 @@ function LoginForm() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-[380px]"
           >
-            <div className="rounded-3xl border border-border/50 bg-card/80 p-8 shadow-2xl shadow-violet-500/10 backdrop-blur-2xl glass">
-              <h1 className="text-center font-serif text-2xl font-semibold leading-snug tracking-tight text-foreground">
+            <div className="rounded-3xl border border-border/50 bg-card/80 p-8 sm:p-10 shadow-2xl shadow-violet-500/10 backdrop-blur-2xl glass">
+              <h1 className="text-center font-serif text-2xl sm:text-3xl font-semibold leading-snug tracking-tight text-foreground">
                 Enter the garden
               </h1>
-              <p className="mt-2 text-center text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-3 text-center text-sm leading-relaxed text-muted-foreground">
                 Sign in with your Google account to continue.
               </p>
 
-              <div className="mt-8">
+              <div className="mt-10">
                 <Button
                   type="button"
                   variant="outline"
@@ -113,8 +113,8 @@ export default function LoginPage() {
 
 function LoginPageFallback() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-8 w-8 animate-pulse rounded-full bg-violet-400/20" />
+    <div className="flex min-h-screen items-center justify-center bg-background gradient-mesh">
+      <div className="h-10 w-10 animate-pulse rounded-full border-2 border-violet-400/30 bg-violet-500/10" />
     </div>
   );
 }

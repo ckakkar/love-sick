@@ -49,22 +49,22 @@ export function LoginDialog({
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className={cn(
-              "fixed left-[50%] top-[50%] z-50 w-full max-w-sm translate-x-[-50%] translate-y-[-50%]",
-              "rounded-2xl border border-purple-500/20 bg-card p-6 shadow-2xl shadow-purple-500/10 glass",
+              "fixed left-[50%] top-[50%] z-[100] w-full max-w-sm translate-x-[-50%] translate-y-[-50%]",
+              "rounded-2xl border border-border/60 border-violet-500/20 bg-card p-6 shadow-2xl shadow-violet-500/10 glass",
               className
             )}
           >
-            <Dialog.Title className="text-lg font-semibold text-foreground">
+            <Dialog.Title className="font-serif text-xl font-semibold tracking-tight text-foreground">
               Sign in to continue
             </Dialog.Title>
-            <Dialog.Description className="mt-1 text-sm text-muted-foreground">
+            <Dialog.Description className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Use Google to get started in one click.
             </Dialog.Description>
             <div className="mt-6 flex flex-col gap-3">
               <Button
                 variant="outline"
                 size="lg"
-                className="w-full"
+                className="w-full hover:bg-violet-500/10 hover:border-violet-400/25"
                 onClick={() => handleOAuth("google")}
                 disabled={!!loading}
               >

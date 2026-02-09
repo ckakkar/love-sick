@@ -67,6 +67,26 @@ const DEFAULT_SCORES: LoveScores = {
   touch: 5,
 };
 
+/* Bar chart hover: active bar style + animated tooltip */
+const barActiveBarYou = { fill: "#c4b5fd", fillOpacity: 1, stroke: "rgba(167,139,250,0.5)", strokeWidth: 2 };
+const barActiveBarPartner = { fill: "#ddd6fe", fillOpacity: 1, stroke: "rgba(196,181,253,0.5)", strokeWidth: 2 };
+
+function BarChartTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number }[]; label?: string }) {
+  if (!active || !payload?.length || !label) return null;
+  const value = payload[0]?.value ?? 0;
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.15, ease: [0.16, 1, 0.3, 1] }}
+      className="rounded-xl border border-border/80 bg-card px-3 py-2 shadow-xl shadow-violet-500/10"
+    >
+      <p className="text-xs font-medium text-foreground">{label}</p>
+      <p className="mt-0.5 font-mono text-sm tabular-nums text-muted-foreground">: {value}</p>
+    </motion.div>
+  );
+}
+
 type PartnerRequestSent = { id: string; to_username: string | null; to_name: string | null; created_at: string };
 type PartnerRequestReceived = { id: string; from_username: string | null; from_name: string | null; created_at: string };
 
@@ -291,6 +311,7 @@ export function DashboardClient({
                         <PolarAngleAxis
                           dataKey="subject"
                           tick={{ fill: "var(--muted-foreground)", fontSize: 11, fontWeight: 500 }}
+                          axisLine={false}
                         />
                         <PolarRadiusAxis
                           angle={90}
@@ -333,15 +354,30 @@ export function DashboardClient({
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
                         <XAxis type="number" domain={[0, 10]} tick={false} axisLine={false} />
                         <YAxis type="category" dataKey="subject" width={52} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <Tooltip
-                          contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }}
-                          labelStyle={{ color: "var(--foreground)" }}
-                          formatter={(value: number | undefined) => [value ?? 0, ""]}
-                          labelFormatter={(label) => label}
+                        <Tooltip content={<BarChartTooltip />} cursor={{ fill: "rgba(167,139,250,0.06)", radius: 8 }} />
+                        <Bar
+                          dataKey="you"
+                          name="You"
+                          fill="#a78bfa"
+                          fillOpacity={0.9}
+                          radius={[0, 6, 6, 0]}
+                          maxBarSize={28}
+                          animationDuration={400}
+                          animationEasing="ease-out"
+                          activeBar={barActiveBarYou}
                         />
-                        <Bar dataKey="you" name="You" fill="#a78bfa" fillOpacity={0.9} radius={[0, 6, 6, 0]} maxBarSize={28} />
                         {hasPartner && partnerGiving && (
-                          <Bar dataKey="partner" name="Partner" fill="#c4b5fd" fillOpacity={0.8} radius={[0, 6, 6, 0]} maxBarSize={28} />
+                          <Bar
+                            dataKey="partner"
+                            name="Partner"
+                            fill="#c4b5fd"
+                            fillOpacity={0.8}
+                            radius={[0, 6, 6, 0]}
+                            maxBarSize={28}
+                            animationDuration={400}
+                            animationEasing="ease-out"
+                            activeBar={barActiveBarPartner}
+                          />
                         )}
                       </BarChart>
                     </ResponsiveContainer>
@@ -387,6 +423,7 @@ export function DashboardClient({
                         <PolarAngleAxis
                           dataKey="subject"
                           tick={{ fill: "var(--muted-foreground)", fontSize: 11, fontWeight: 500 }}
+                          axisLine={false}
                         />
                         <PolarRadiusAxis
                           angle={90}
@@ -429,15 +466,30 @@ export function DashboardClient({
                         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" strokeOpacity={0.4} vertical={false} />
                         <XAxis type="number" domain={[0, 10]} tick={false} axisLine={false} />
                         <YAxis type="category" dataKey="subject" width={52} tick={{ fill: "var(--muted-foreground)", fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <Tooltip
-                          contentStyle={{ borderRadius: 12, border: "1px solid var(--border)", background: "var(--card)" }}
-                          labelStyle={{ color: "var(--foreground)" }}
-                          formatter={(value: number | undefined) => [value ?? 0, ""]}
-                          labelFormatter={(label) => label}
+                        <Tooltip content={<BarChartTooltip />} cursor={{ fill: "rgba(167,139,250,0.06)", radius: 8 }} />
+                        <Bar
+                          dataKey="you"
+                          name="You"
+                          fill="#a78bfa"
+                          fillOpacity={0.9}
+                          radius={[0, 6, 6, 0]}
+                          maxBarSize={28}
+                          animationDuration={400}
+                          animationEasing="ease-out"
+                          activeBar={barActiveBarYou}
                         />
-                        <Bar dataKey="you" name="You" fill="#a78bfa" fillOpacity={0.9} radius={[0, 6, 6, 0]} maxBarSize={28} />
                         {hasPartner && partnerReceiving && (
-                          <Bar dataKey="partner" name="Partner" fill="#c4b5fd" fillOpacity={0.8} radius={[0, 6, 6, 0]} maxBarSize={28} />
+                          <Bar
+                            dataKey="partner"
+                            name="Partner"
+                            fill="#c4b5fd"
+                            fillOpacity={0.8}
+                            radius={[0, 6, 6, 0]}
+                            maxBarSize={28}
+                            animationDuration={400}
+                            animationEasing="ease-out"
+                            activeBar={barActiveBarPartner}
+                          />
                         )}
                       </BarChart>
                     </ResponsiveContainer>

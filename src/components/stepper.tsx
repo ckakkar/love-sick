@@ -105,7 +105,7 @@ export default function Stepper({
     >
       <div
         className={cn(
-          "mx-auto w-full max-w-md rounded-3xl border border-border/60 bg-card/70 p-6 shadow-xl shadow-violet-500/5 backdrop-blur-xl sm:aspect-4/3 md:aspect-2/1",
+          "mx-auto w-full max-w-md rounded-3xl border border-border/60 bg-card/80 p-6 sm:p-8 shadow-xl shadow-violet-500/10 backdrop-blur-xl glass",
           stepCircleContainerClassName
         )}
       >
@@ -170,10 +170,10 @@ export default function Stepper({
                   type="button"
                   onClick={handleBack}
                   className={cn(
-                    "rounded-2xl px-4 py-2.5 text-sm font-medium transition-colors duration-200",
+                    "rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
                     currentStep === 1
                       ? "pointer-events-none cursor-default opacity-50 text-muted-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                   )}
                   {...backButtonProps}
                 >
@@ -185,8 +185,8 @@ export default function Stepper({
                 onClick={isLastStep ? handleComplete : handleNext}
                 disabled={isLastStep && completing}
                 className={cn(
-                  "flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/15 transition-all duration-200",
-                  "bg-gradient-to-r from-[#a78bfa] to-[#8b5cf6] hover:from-[#c4b5fd] hover:to-[#a78bfa] hover:shadow-violet-500/25 active:opacity-90 disabled:opacity-70"
+                  "flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20 transition-all duration-200",
+                  "bg-gradient-to-r from-[#a78bfa] to-[#8b5cf6] hover:from-[#c4b5fd] hover:to-[#a78bfa] hover:shadow-violet-500/30 active:scale-[0.98] disabled:opacity-70"
                 )}
                 {...nextButtonProps}
               >
