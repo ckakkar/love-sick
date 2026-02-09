@@ -109,6 +109,17 @@ const Slider: React.FC<SliderProps> = ({
     return ((value - startingValue) / totalRange) * 100;
   };
 
+  const decrement = () => {
+    const next = Math.max(startingValue, value - stepSize);
+    const snapped = isStepped ? Math.round(next / stepSize) * stepSize : next;
+    if (snapped !== value) onChange?.(Math.max(startingValue, snapped));
+  };
+  const increment = () => {
+    const next = Math.min(maxValue, value + stepSize);
+    const snapped = isStepped ? Math.round(next / stepSize) * stepSize : next;
+    if (snapped !== value) onChange?.(Math.min(maxValue, snapped));
+  };
+
   return (
     <>
       <motion.div
@@ -122,7 +133,8 @@ const Slider: React.FC<SliderProps> = ({
         }}
         className="flex w-full touch-none select-none items-center justify-center gap-4"
       >
-        <motion.div
+        <motion.button
+          type="button"
           animate={{
             scale: region === "left" ? [1, 1.4, 1] : 1,
             transition: { duration: 0.25 },
@@ -132,10 +144,16 @@ const Slider: React.FC<SliderProps> = ({
               () => (region === "left" ? -overflow.get() / scale.get() : 0)
             ),
           }}
-          className="flex h-8 w-8 items-center justify-center text-muted-foreground"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            decrement();
+          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400/50"
+          aria-label="Decrease value"
         >
           {leftIcon}
-        </motion.div>
+        </motion.button>
 
         <div
           ref={sliderRef}
@@ -176,7 +194,8 @@ const Slider: React.FC<SliderProps> = ({
           </motion.div>
         </div>
 
-        <motion.div
+        <motion.button
+          type="button"
           animate={{
             scale: region === "right" ? [1, 1.4, 1] : 1,
             transition: { duration: 0.25 },
@@ -186,10 +205,16 @@ const Slider: React.FC<SliderProps> = ({
               () => (region === "right" ? overflow.get() / scale.get() : 0)
             ),
           }}
-          className="flex h-8 w-8 items-center justify-center text-muted-foreground"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            increment();
+          }}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-violet-400/50"
+          aria-label="Increase value"
         >
           {rightIcon}
-        </motion.div>
+        </motion.button>
       </motion.div>
       {showValue && (
         <p className="mt-1 text-center text-xs font-medium tabular-nums tracking-wide text-muted-foreground">

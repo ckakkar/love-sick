@@ -22,8 +22,8 @@ import {
   Tooltip,
 } from "recharts";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
-import { LOVE_LANGUAGE_KEYS, type LoveScores } from "@/types/assessment";
+import { Sparkles, BookOpen } from "lucide-react";
+import { LOVE_LANGUAGE_KEYS, LOVE_LANGUAGE_LABELS, type LoveScores } from "@/types/assessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,6 +41,14 @@ const LABELS_SHORT: Record<string, string> = {
   gifts: "Gifts",
   time: "Time",
   touch: "Touch",
+};
+
+const PRELIM_BLURBS: Record<string, string> = {
+  words: "You’re nourished by specific, sincere words — when someone actually says the thing out loud.",
+  service: "You feel loved when life is made lighter: chores handled, tasks supported, help that appears unasked.",
+  gifts: "You notice the small symbols — thoughtful tokens, handwritten notes, tiny objects that say \"I remembered you.\"",
+  time: "Shared, undistracted time is your oxygen — being fully there matters more than where you are.",
+  touch: "Closeness in space is closeness in feeling — hugs, hand-holds, and small physical nudges land deeply.",
 };
 
 function buildRadarData(scores: LoveScores, partnerScores?: LoveScores | null) {
@@ -69,9 +77,29 @@ const DEFAULT_SCORES: LoveScores = {
   touch: 5,
 };
 
+function buildSoloPrelimInsights(giving: LoveScores, receiving: LoveScores) {
+  const sortedByReceiving = [...LOVE_LANGUAGE_KEYS].sort((a, b) => receiving[b] - receiving[a]);
+  const topTwo = sortedByReceiving.slice(0, 2);
+
+  // Simple growth edge: the lowest receiving score (what might be under-fed right now)
+  const growthKey = [...LOVE_LANGUAGE_KEYS].reduce((lowest, key) => {
+    if (lowest === null) return key;
+    return receiving[key] < receiving[lowest] ? key : lowest;
+  }, null as (typeof LOVE_LANGUAGE_KEYS)[number] | null);
+
+  return {
+    strengths: topTwo,
+    growth: growthKey,
+  };
+}
+
+/* Partner series: yellow/amber for readability vs violet "You" */
+const PARTNER_CHART_COLOR = "#fcd34d"; /* sync-glow amber */
+const PARTNER_CHART_FILL_OPACITY = 0.35;
+
 /* Bar chart hover: active bar style + animated tooltip */
 const barActiveBarYou = { fill: "#c4b5fd", fillOpacity: 1, stroke: "rgba(167,139,250,0.5)", strokeWidth: 2 };
-const barActiveBarPartner = { fill: "#ddd6fe", fillOpacity: 1, stroke: "rgba(196,181,253,0.5)", strokeWidth: 2 };
+const barActiveBarPartner = { fill: "#fde047", fillOpacity: 1, stroke: "rgba(252,211,77,0.6)", strokeWidth: 2 };
 
 function BarChartTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number }[]; label?: string }) {
   if (!active || !payload?.length || !label) return null;
@@ -101,6 +129,8 @@ export function DashboardClient({
   partnerId,
   coupleId,
   hasPrologue,
+  myPrologueContent,
+  partnerPrologueContent,
   partnerRequests,
   myUsername,
   hasAssessment,
@@ -114,6 +144,8 @@ export function DashboardClient({
   partnerId: string | null;
   coupleId: string | null;
   hasPrologue: boolean;
+  myPrologueContent: string | null;
+  partnerPrologueContent: string | null;
   partnerRequests: { sent: PartnerRequestSent[]; received: PartnerRequestReceived[] };
   myUsername: string | null;
   hasAssessment: boolean;
@@ -136,6 +168,7 @@ export function DashboardClient({
   const prevOnlineRef = useRef(false);
   const showPrologueGate = hasPartner && partnerId && (!prologueUnlocked || dissolving);
   const showPartnerOnlineToast = notifyPartnerOnline !== false;
+  const soloPrelim = !hasPartner && hasAssessment ? buildSoloPrelimInsights(giving, receiving) : null;
 
   useEffect(() => {
     if (showPartnerOnlineToast && partnerOnline && !prevOnlineRef.current && partnerId) {
@@ -193,6 +226,7 @@ export function DashboardClient({
               if (dissolving) {
                 setDissolving(false);
                 setPrologueUnlocked(true);
+                router.refresh();
               }
             }}
           />
@@ -283,6 +317,45 @@ export function DashboardClient({
               </Card>
             </motion.div>
           )}
+          {hasPartner && (myPrologueContent || partnerPrologueContent) && (
+            <motion.div variants={cardItem} className="bento-cell col-span-4">
+              <Card className="card-hover glass h-full border-border/60 border-violet-500/10 overflow-hidden">
+                <CardHeader className="border-b border-border/40 pb-3">
+                  <CardTitle className="font-serif flex items-center gap-2 text-base tracking-tight sm:text-lg">
+                    <span className="rounded-lg bg-violet-500/15 p-1.5">
+                      <BookOpen className="h-4 w-4 text-violet-400" />
+                    </span>
+                    Prologues
+                  </CardTitle>
+                  <CardDescription className="mt-1 text-xs text-muted-foreground">
+                    The notes you and your partner wrote about why you chose each other.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-6">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/90">Why I chose you</p>
+                    {myPrologueContent ? (
+                      <p className="whitespace-pre-wrap rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm leading-relaxed text-muted-foreground">
+                        {myPrologueContent}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground/70">You haven’t written your prologue yet.</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--sync-glow)]/90">Why they chose you</p>
+                    {partnerPrologueContent ? (
+                      <p className="whitespace-pre-wrap rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 text-sm leading-relaxed text-muted-foreground">
+                        {partnerPrologueContent}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-muted-foreground/70">Your partner hasn’t shared their prologue yet.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
           {/* Fingerprint — Radar or Bar (large) */}
           <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
             <Card className="card-hover overflow-hidden border border-border/60 bg-card/80 shadow-lg shadow-violet-500/5 backdrop-blur-sm">
@@ -338,9 +411,9 @@ export function DashboardClient({
                           <Radar
                             name="Partner (Giving)"
                             dataKey="partnerValue"
-                            stroke="#c4b5fd"
-                            fill="#c4b5fd"
-                            fillOpacity={0.22}
+                            stroke={PARTNER_CHART_COLOR}
+                            fill={PARTNER_CHART_COLOR}
+                            fillOpacity={PARTNER_CHART_FILL_OPACITY}
                             strokeWidth={2}
                           />
                         )}
@@ -378,8 +451,8 @@ export function DashboardClient({
                           <Bar
                             dataKey="partner"
                             name="Partner"
-                            fill="#c4b5fd"
-                            fillOpacity={0.8}
+                            fill={PARTNER_CHART_COLOR}
+                            fillOpacity={0.85}
                             radius={[0, 6, 6, 0]}
                             maxBarSize={28}
                             animationDuration={400}
@@ -450,9 +523,9 @@ export function DashboardClient({
                           <Radar
                             name="Partner (Receiving)"
                             dataKey="partnerValue"
-                            stroke="#c4b5fd"
-                            fill="#c4b5fd"
-                            fillOpacity={0.22}
+                            stroke={PARTNER_CHART_COLOR}
+                            fill={PARTNER_CHART_COLOR}
+                            fillOpacity={PARTNER_CHART_FILL_OPACITY}
                             strokeWidth={2}
                           />
                         )}
@@ -490,8 +563,8 @@ export function DashboardClient({
                           <Bar
                             dataKey="partner"
                             name="Partner"
-                            fill="#c4b5fd"
-                            fillOpacity={0.8}
+                            fill={PARTNER_CHART_COLOR}
+                            fillOpacity={0.85}
                             radius={[0, 6, 6, 0]}
                             maxBarSize={28}
                             animationDuration={400}
@@ -599,28 +672,78 @@ export function DashboardClient({
                       </Button>
                     </div>
                   ) : (
-                  <Button
-                    className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-400 hover:to-purple-500 hover:shadow-violet-500/30"
-                    disabled={soloInsightLoading}
-                    onClick={async () => {
-                      setSoloInsightLoading(true);
-                      try {
-                        const result = await getSoloInsight(giving, receiving);
-                        setSoloInsight(result);
-                      } finally {
-                        setSoloInsightLoading(false);
-                      }
-                    }}
-                  >
-                    {soloInsightLoading ? (
-                      <>
-                        <LoadingSpinner className="h-3.5 w-3.5 border-2 border-white/50 border-t-white" />
-                        Getting insights…
-                      </>
-                    ) : (
-                      "Get my insights"
-                    )}
-                  </Button>
+                    <div className="space-y-6">
+                      {soloPrelim && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                          className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-4 sm:p-5"
+                        >
+                          <p className="text-xs font-semibold uppercase tracking-wide text-violet-300/90">
+                            Preview from your answers
+                          </p>
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            Before we go deep, here’s what your assessment is already whispering about what matters most.
+                          </p>
+                          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            <motion.div
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: 0.05, duration: 0.3 }}
+                              className="rounded-xl border border-violet-500/25 bg-background/60 p-3"
+                            >
+                              <p className="text-xs font-medium text-violet-200">Top love languages right now</p>
+                              <p className="mt-1 text-sm font-semibold text-foreground">
+                                {soloPrelim.strengths.map((k) => LOVE_LANGUAGE_LABELS[k]).join(" · ")}
+                              </p>
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                {PRELIM_BLURBS[soloPrelim.strengths[0]]}
+                              </p>
+                            </motion.div>
+                            {soloPrelim.growth && (
+                              <motion.div
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1, duration: 0.3 }}
+                                className="rounded-xl border border-violet-500/20 bg-background/50 p-3"
+                              >
+                                <p className="text-xs font-medium text-violet-200">A gentle growth edge</p>
+                                <p className="mt-1 text-sm font-semibold text-foreground">
+                                  {LOVE_LANGUAGE_LABELS[soloPrelim.growth]}
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {PRELIM_BLURBS[soloPrelim.growth]}
+                                </p>
+                              </motion.div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+
+                      <Button
+                        className="w-full bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/20 hover:from-violet-400 hover:to-purple-500 hover:shadow-violet-500/30"
+                        disabled={soloInsightLoading}
+                        onClick={async () => {
+                          setSoloInsightLoading(true);
+                          try {
+                            const result = await getSoloInsight(giving, receiving);
+                            setSoloInsight(result);
+                          } finally {
+                            setSoloInsightLoading(false);
+                          }
+                        }}
+                      >
+                        {soloInsightLoading ? (
+                          <>
+                            <LoadingSpinner className="h-3.5 w-3.5 border-2 border-white/50 border-t-white" />
+                            Getting insights…
+                          </>
+                        ) : (
+                          "Get my insights"
+                        )}
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>

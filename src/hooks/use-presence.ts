@@ -1,43 +1,77 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+
+/** Presence payload we track; must include user_id for partner detection. */
+type PresencePayload = { user_id: string };
+
+function collectUserIdsFromPresenceState(state: Record<string, unknown[]>): Set<string> {
+  const userIds = new Set<string>();
+  Object.values(state).forEach((presences) => {
+    if (!Array.isArray(presences)) return;
+    presences.forEach((p) => {
+      const payload = p as Record<string, unknown>;
+      const id = payload?.user_id;
+      if (typeof id === "string" && id) userIds.add(id);
+    });
+  });
+  return userIds;
+}
 
 export function usePartnerPresence(roomId: string | null, partnerId: string | null) {
   const [partnerOnline, setPartnerOnline] = useState(false);
+  const channelRef = useRef<ReturnType<ReturnType<typeof createClient>["channel"]> | null>(null);
 
   useEffect(() => {
     if (!roomId || !partnerId) {
-      queueMicrotask(() => setPartnerOnline(false));
+      setPartnerOnline(false);
       return;
     }
 
     const supabase = createClient();
-    const channel = supabase.channel(`room:${roomId}`, {
-      config: { presence: { key: "" } },
-    });
+    const channelName = `room:${roomId}`;
+    const channel = supabase.channel(channelName);
+
+    channelRef.current = channel;
+
+    const updatePartnerOnline = () => {
+      const state = channel.presenceState() as Record<string, PresencePayload[]>;
+      const userIds = collectUserIdsFromPresenceState(state as Record<string, unknown[]>);
+      setPartnerOnline(userIds.has(partnerId));
+    };
 
     channel
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        const userIds = new Set<string>();
-        Object.values(state).forEach((presences) => {
-          (presences as { user_id?: string }[]).forEach((p) => {
-            if (p?.user_id) userIds.add(p.user_id);
-          });
-        });
-        setPartnerOnline(userIds.has(partnerId));
-      })
+      .on("presence", { event: "sync" }, updatePartnerOnline)
+      .on("presence", { event: "join" }, updatePartnerOnline)
+      .on("presence", { event: "leave" }, updatePartnerOnline)
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) await channel.track({ user_id: user.id });
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (user?.id) {
+            try {
+              await channel.track({ user_id: user.id });
+            } catch {
+              // track can fail on reconnect; sync will still reflect state
+            }
+          }
+        }
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          setPartnerOnline(false);
         }
       });
 
     return () => {
-      supabase.removeChannel(channel);
+      channelRef.current = null;
       setPartnerOnline(false);
+      channel
+        .untrack()
+        .catch(() => {})
+        .then(() => {
+          supabase.removeChannel(channel);
+        });
     };
   }, [roomId, partnerId]);
 

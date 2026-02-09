@@ -4,13 +4,24 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import * as Avatar from "@radix-ui/react-avatar";
+import * as Dialog from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { SexSelector } from "@/components/ui/sex-selector";
 import { cn } from "@/lib/utils";
-import { User, UserCircle, Calendar } from "lucide-react";
+import { User, UserCircle, Calendar, Unlink, Trash2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+const UNLINK_MIN_WORDS = 50;
+
+function wordCount(text: string): number {
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((s) => s.length > 0).length;
+}
 
 type ProfileForm = {
   username: string;
@@ -39,6 +50,18 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [hasPartner, setHasPartner] = useState(false);
+  const [unlinkModalOpen, setUnlinkModalOpen] = useState(false);
+  const [unlinkReason, setUnlinkReason] = useState("");
+  const [unlinkLoading, setUnlinkLoading] = useState(false);
+  const [unlinkError, setUnlinkError] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteUnderstand, setDeleteUnderstand] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState<{ id: string; type: string; payload: { reason?: string }; read_at: string | null; created_at: string }[]>([]);
+
   useEffect(() => {
     setProfileLoading(true);
     fetch("/api/profile")
@@ -59,6 +82,21 @@ export default function SettingsPage() {
       })
       .catch(() => {})
       .finally(() => setProfileLoading(false));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/couple")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.hasPartner !== undefined) setHasPartner(d.hasPartner);
+      })
+      .catch(() => {});
+    fetch("/api/notifications")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.notifications) setNotifications(d.notifications);
+      })
+      .catch(() => {});
   }, []);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -120,6 +158,60 @@ export default function SettingsPage() {
     "w-full rounded-2xl border-2 border-border/60 bg-muted/30 px-4 py-3.5 text-foreground placeholder:text-muted-foreground transition-all duration-200",
     "focus:border-violet-400/60 focus:outline-none focus:ring-2 focus:ring-violet-400/20 focus:bg-background/80 hover:border-violet-400/30 hover:bg-muted/40"
   );
+
+  const unlinkWords = wordCount(unlinkReason);
+  const unlinkValid = unlinkWords >= UNLINK_MIN_WORDS;
+
+  const handleUnlinkSubmit = async () => {
+    if (!unlinkValid || unlinkLoading) return;
+    setUnlinkLoading(true);
+    setUnlinkError(null);
+    const res = await fetch("/api/partner-unlink", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason: unlinkReason.trim() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setUnlinkLoading(false);
+    if (res.ok) {
+      setUnlinkModalOpen(false);
+      setUnlinkReason("");
+      setHasPartner(false);
+      router.refresh();
+    } else {
+      setUnlinkError(data.error || "Something went wrong.");
+    }
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (deleteConfirm.trim().toUpperCase() !== "DELETE" || !deleteUnderstand || deleteLoading) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    const res = await fetch("/api/account/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: deleteConfirm.trim() }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setDeleteLoading(false);
+    if (res.ok) {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      router.push("/");
+      router.refresh();
+    } else {
+      setDeleteError(data.error || "Something went wrong.");
+    }
+  };
+
+  const markNotificationRead = async (id: string) => {
+    await fetch("/api/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)));
+  };
 
   if (profileLoading) {
     return (
@@ -328,7 +420,206 @@ export default function SettingsPage() {
             </Button>
           </CardContent>
         </Card>
+
+        {notifications.length > 0 && (
+          <Card className="card-hover border-amber-500/20 bg-amber-500/5">
+            <CardHeader>
+              <CardTitle className="font-serif">Relationship messages</CardTitle>
+              <CardDescription>Messages from your partner or about your link.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {notifications.map((n) => (
+                <div
+                  key={n.id}
+                  className={cn(
+                    "rounded-xl border p-4",
+                    n.type === "partner_left_app"
+                      ? "border-amber-500/30 bg-amber-500/10"
+                      : "border-violet-500/20 bg-violet-500/5"
+                  )}
+                >
+                  {n.type === "partner_left_app" ? (
+                    <>
+                      <p className="font-medium text-foreground">Your partner is no longer on the app</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        They have deleted their account. You are no longer linked.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="font-medium text-foreground">Message from your former partner</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
+                        {n.payload?.reason ?? ""}
+                      </p>
+                    </>
+                  )}
+                  {!n.read_at && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-2 text-muted-foreground"
+                      onClick={() => markNotificationRead(n.id)}
+                    >
+                      Mark as read
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {hasPartner && (
+          <Card className="card-hover border-border/60 bg-card/80 shadow-lg shadow-violet-500/5">
+            <CardHeader>
+              <CardTitle className="font-serif flex items-center gap-2">
+                <Unlink className="h-5 w-5 text-violet-400" />
+                Relationship
+              </CardTitle>
+              <CardDescription>
+                Unlinking will send a message to your partner with your reason. They will see it in Settings. You can connect again later by sending a new invite.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                variant="outline"
+                className="border-amber-500/40 text-amber-200 hover:bg-amber-500/10"
+                onClick={() => {
+                  setUnlinkModalOpen(true);
+                  setUnlinkError(null);
+                  setUnlinkReason("");
+                }}
+              >
+                Unlink from partner
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="card-hover border-red-500/20 bg-red-500/5">
+          <CardHeader>
+            <CardTitle className="font-serif flex items-center gap-2 text-red-200">
+              <Trash2 className="h-5 w-5" />
+              Danger zone
+            </CardTitle>
+            <CardDescription>
+              Delete your account permanently. All your data (profile, assessment, prologue) will be removed. If you are linked to a partner, they will be unlinked and notified that you are no longer on the app.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="outline"
+              className="border-red-500/40 text-red-200 hover:bg-red-500/10"
+              onClick={() => {
+                setDeleteModalOpen(true);
+                setDeleteError(null);
+                setDeleteConfirm("");
+                setDeleteUnderstand(false);
+              }}
+            >
+              Delete my account
+            </Button>
+          </CardContent>
+        </Card>
       </div>
+
+      <Dialog.Root open={unlinkModalOpen} onOpenChange={setUnlinkModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md" />
+          <Dialog.Content className="fixed left-[50%] top-[50%] z-[100] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border/60 border-violet-500/20 bg-card p-6 shadow-2xl shadow-violet-500/10">
+            <Dialog.Title className="font-serif text-xl font-semibold tracking-tight text-foreground">
+              Unlink from partner
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-muted-foreground">
+              Write at least {UNLINK_MIN_WORDS} words explaining why you are unlinking. This will be sent to your partner so they can read it in Settings.
+            </Dialog.Description>
+            <textarea
+              value={unlinkReason}
+              onChange={(e) => setUnlinkReason(e.target.value)}
+              placeholder="Share what you feel they should know..."
+              className="mt-4 min-h-[160px] w-full resize-none rounded-2xl border border-input bg-background px-4 py-3 text-foreground placeholder:text-muted-foreground focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+              maxLength={2000}
+              rows={6}
+            />
+            <div className="mt-2 flex items-center justify-between">
+              <span className={cn("text-xs tabular-nums", unlinkValid ? "text-emerald-400" : "text-muted-foreground")}>
+                {unlinkWords} / {UNLINK_MIN_WORDS} words
+              </span>
+            </div>
+            {unlinkError && <p className="mt-2 text-sm text-red-400">{unlinkError}</p>}
+            <div className="mt-6 flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setUnlinkModalOpen(false)} disabled={unlinkLoading}>
+                Cancel
+              </Button>
+              <Button onClick={handleUnlinkSubmit} disabled={!unlinkValid || unlinkLoading}>
+                {unlinkLoading ? (
+                  <>
+                    <LoadingSpinner className="h-3.5 w-3.5 border-2" />
+                    Sending…
+                  </>
+                ) : (
+                  "Send and unlink"
+                )}
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+
+      <Dialog.Root open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md" />
+          <Dialog.Content className="fixed left-[50%] top-[50%] z-[100] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border/60 border-red-500/20 bg-card p-6 shadow-2xl shadow-red-500/10">
+            <Dialog.Title className="font-serif text-xl font-semibold tracking-tight text-red-200">
+              Delete account
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-muted-foreground">
+              This will permanently delete your account and all your data. If you are linked, your partner will be unlinked and notified that you are no longer on the app. This cannot be undone.
+            </Dialog.Description>
+            <label className="mt-4 flex cursor-pointer items-start gap-3">
+              <input
+                type="checkbox"
+                checked={deleteUnderstand}
+                onChange={(e) => setDeleteUnderstand(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-border accent-red-500"
+              />
+              <span className="text-sm text-muted-foreground">
+                I understand that my data will be permanently deleted and my partner will be notified if I am linked.
+              </span>
+            </label>
+            <p className="mt-3 text-sm text-muted-foreground">Type <strong className="text-foreground">DELETE</strong> to confirm:</p>
+            <input
+              type="text"
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              placeholder="DELETE"
+              className="mt-1 w-full rounded-2xl border border-input bg-background px-4 py-2.5 text-foreground placeholder:text-muted-foreground focus:border-red-400/40 focus:outline-none focus:ring-2 focus:ring-red-400/20"
+            />
+            {deleteError && <p className="mt-2 text-sm text-red-400">{deleteError}</p>}
+            <div className="mt-6 flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setDeleteModalOpen(false)} disabled={deleteLoading}>
+                Cancel
+              </Button>
+              <Button
+                className="bg-red-600 hover:bg-red-500 text-white"
+                onClick={handleDeleteSubmit}
+                disabled={
+                  deleteConfirm.trim().toUpperCase() !== "DELETE" || !deleteUnderstand || deleteLoading
+                }
+              >
+                {deleteLoading ? (
+                  <>
+                    <LoadingSpinner className="h-3.5 w-3.5 border-2 border-white/50 border-t-white" />
+                    Deleting…
+                  </>
+                ) : (
+                  "Delete my account"
+                )}
+              </Button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
       </div>
     </motion.div>
   );

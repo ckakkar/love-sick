@@ -73,14 +73,25 @@ export default async function DashboardPage() {
   }
 
   let hasPrologue = false;
+  let myPrologueContent: string | null = null;
+  let partnerPrologueContent: string | null = null;
   if (partnerId) {
-    const { data: prologue } = await supabase
+    const { data: myPrologue } = await supabase
       .from("prologues")
-      .select("id")
+      .select("content")
       .eq("user_id", user.id)
       .eq("partner_id", partnerId)
       .maybeSingle();
-    hasPrologue = !!prologue;
+    hasPrologue = !!myPrologue;
+    myPrologueContent = myPrologue?.content ?? null;
+
+    const { data: partnerPrologue } = await supabase
+      .from("prologues")
+      .select("content")
+      .eq("user_id", partnerId)
+      .eq("partner_id", user.id)
+      .maybeSingle();
+    partnerPrologueContent = partnerPrologue?.content ?? null;
   }
 
   return (
@@ -93,6 +104,8 @@ export default async function DashboardPage() {
       partnerId={partnerId ?? null}
       coupleId={coupleId}
       hasPrologue={hasPrologue}
+      myPrologueContent={myPrologueContent}
+      partnerPrologueContent={partnerPrologueContent}
       partnerRequests={partnerRequests}
       myUsername={profile?.username ?? null}
       hasAssessment={!!myAssessment}
