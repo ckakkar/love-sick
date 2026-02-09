@@ -27,6 +27,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DigitalGarden } from "@/components/digital-garden";
+import { WeathervaneCard } from "@/components/dashboard/weathervane-card";
+import { TimeDifferenceCard } from "@/components/dashboard/time-difference-card";
+import { StreakCounterCard } from "@/components/dashboard/streak-counter-card";
 import { usePartnerPresence } from "@/hooks/use-presence";
 import { cn } from "@/lib/utils";
 
@@ -144,12 +147,13 @@ export function DashboardClient({
   };
 
   return (
-    <div className={cn("min-h-screen bg-background gradient-mesh transition-all duration-500", partnerOnline && "rounded-lg border-2 border-[var(--sync-glow)] sync-glow")}>
+    <div className={cn("min-h-screen bg-background gradient-mesh dashboard-bg transition-all duration-500", partnerOnline && "rounded-lg border-2 border-[var(--sync-glow)] sync-glow")}>
       {toast && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-border bg-card px-4 py-2 text-sm shadow-lg"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-xl border border-border/80 bg-card/95 px-4 py-2.5 text-sm shadow-xl shadow-violet-500/10 backdrop-blur-xl"
         >
           {toast}
         </motion.div>
@@ -176,11 +180,11 @@ export function DashboardClient({
       )}
 
       <div className="pointer-events-none fixed left-1/2 top-0 h-96 w-[600px] -translate-x-1/2 rounded-full bg-[#7c3aed]/12 blur-[100px]" />
-      <div className="relative mx-auto max-w-7xl px-6 py-8">
+      <div className="relative z-10 mx-auto max-w-7xl px-6 py-8">
         <motion.header
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="mb-10 flex items-center justify-between"
         >
           <div>
@@ -210,10 +214,10 @@ export function DashboardClient({
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid gap-6 lg:grid-cols-2"
+          className="bento-grid"
         >
           {!hasAssessment && (
-            <motion.div variants={cardItem} className="lg:col-span-2">
+            <motion.div variants={cardItem} className="bento-cell col-span-4 lg:col-span-4">
               <Card className="border-violet-400/30 bg-violet-500/10">
                 <CardHeader>
                   <CardTitle>Discover your love language</CardTitle>
@@ -229,9 +233,31 @@ export function DashboardClient({
               </Card>
             </motion.div>
           )}
-          {/* Fingerprint — Radar or Bar */}
-          <motion.div variants={cardItem}>
-            <Card className="card-hover overflow-hidden border-0 bg-card/80 shadow-lg shadow-black/5 backdrop-blur-sm">
+          {/* Row 1: Weathervane, Time Difference, Streak */}
+          <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
+            <WeathervaneCard hasPartner={hasPartner} data={null} />
+          </motion.div>
+          <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
+            <TimeDifferenceCard hasPartner={hasPartner} data={null} />
+          </motion.div>
+          <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
+            <StreakCounterCard hasPartner={hasPartner} data={null} />
+          </motion.div>
+          {hasPartner && (
+            <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
+              <Card className="card-hover glass h-full border-border/60 border-violet-500/10 flex flex-col items-center justify-center py-4">
+                {partnerOnline ? (
+                  <motion.span animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1.5 }} className="text-[var(--sync-glow)]">
+                    <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24" aria-hidden><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                  </motion.span>
+                ) : null}
+                <p className="mt-1 text-xs font-medium text-muted-foreground">Partner {partnerOnline ? "here" : "away"}</p>
+              </Card>
+            </motion.div>
+          )}
+          {/* Fingerprint — Radar or Bar (large) */}
+          <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
+            <Card className="card-hover overflow-hidden border border-border/60 bg-card/80 shadow-lg shadow-violet-500/5 backdrop-blur-sm">
               <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-border/40 pb-4">
                 <div>
                   <CardTitle className="font-serif text-lg tracking-tight">The Fingerprint</CardTitle>
@@ -245,7 +271,7 @@ export function DashboardClient({
                     value={fingerprintChartType}
                     onChange={(e) => setFingerprintChartType(e.target.value as "radar" | "bar")}
                     className={cn(
-                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-colors",
+                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-all duration-200",
                       "hover:border-violet-400/30 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
                     )}
                   >
@@ -325,9 +351,9 @@ export function DashboardClient({
             </Card>
           </motion.div>
 
-          {/* Receiving — Radar or Bar */}
-          <motion.div variants={cardItem}>
-            <Card className="card-hover overflow-hidden border-0 bg-card/80 shadow-lg shadow-black/5 backdrop-blur-sm">
+          {/* Receiving — Radar or Bar (large) */}
+          <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
+            <Card className="card-hover overflow-hidden h-full border border-border/60 bg-card/80 shadow-lg shadow-violet-500/5 backdrop-blur-sm">
               <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 border-b border-border/40 pb-4">
                 <div>
                   <CardTitle className="font-serif text-lg tracking-tight">How you need to receive love</CardTitle>
@@ -341,7 +367,7 @@ export function DashboardClient({
                     value={receivingChartType}
                     onChange={(e) => setReceivingChartType(e.target.value as "radar" | "bar")}
                     className={cn(
-                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-colors",
+                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-all duration-200",
                       "hover:border-violet-400/30 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
                     )}
                   >
@@ -421,9 +447,9 @@ export function DashboardClient({
             </Card>
           </motion.div>
 
-          {/* Digital Garden */}
-          <motion.div variants={cardItem}>
-          <Card className="card-hover glass border-purple-500/10">
+          {/* Digital Garden (large) */}
+          <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
+          <Card className="card-hover glass h-full border-purple-500/10">
             <CardHeader>
               <CardTitle className="font-serif">Digital Garden</CardTitle>
               <CardDescription>
@@ -446,8 +472,8 @@ export function DashboardClient({
 
           {/* Solo AI Insights — for users without a partner */}
           {!hasPartner && hasAssessment && (
-            <motion.div variants={cardItem} className="lg:col-span-2">
-              <Card className="card-hover glass relative overflow-hidden border-violet-500/20 bg-gradient-to-b from-violet-500/5 to-transparent lg:col-span-2 shadow-lg shadow-violet-500/10">
+            <motion.div variants={cardItem} className="bento-cell col-span-4">
+              <Card className="card-hover glass relative overflow-hidden border-violet-500/20 bg-gradient-to-b from-violet-500/5 to-transparent shadow-lg shadow-violet-500/10">
                 <div className="pointer-events-none absolute right-0 top-0 h-48 w-48 translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-400/10 blur-3xl" />
                 <CardHeader className="relative">
                   <CardTitle className="flex items-center gap-2 font-serif text-xl">
@@ -526,8 +552,8 @@ export function DashboardClient({
           )}
 
           {/* Heatmap */}
-          <motion.div variants={cardItem} className="lg:col-span-2">
-          <Card className="card-hover glass border-purple-500/10 lg:col-span-2">
+          <motion.div variants={cardItem} className="bento-cell col-span-2">
+          <Card className="card-hover glass h-full border-purple-500/10">
             <CardHeader>
               <CardTitle>Intensity grid</CardTitle>
               <CardDescription>How strongly you give (top row) and need to receive (bottom row) each language — 1 (low) to 10 (high)</CardDescription>
@@ -600,8 +626,8 @@ export function DashboardClient({
 
           {/* AI Insight */}
           {hasPartner && partnerGiving && partnerReceiving && (
-            <motion.div variants={cardItem} className="lg:col-span-2">
-            <Card className="card-hover glass border-purple-500/10 lg:col-span-2">
+            <motion.div variants={cardItem} className="bento-cell col-span-4">
+            <Card className="card-hover glass border-purple-500/10">
               <CardHeader>
               <CardTitle>How to grow together</CardTitle>
               <CardDescription>
@@ -657,8 +683,8 @@ export function DashboardClient({
           )}
 
           {/* Sync with Partner */}
-          <motion.div variants={cardItem} className="lg:col-span-2">
-          <Card className="card-hover glass border-purple-500/10 lg:col-span-2">
+          <motion.div variants={cardItem} className="bento-cell col-span-2">
+          <Card className="card-hover glass h-full border-purple-500/10">
             <CardHeader>
               <CardTitle>Connect with your partner</CardTitle>
               <CardDescription>
@@ -771,8 +797,8 @@ function PartnerInviteCard({
                 onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
                 placeholder="Enter their username"
                 className={cn(
-                  "w-full rounded-2xl border border-border bg-background/80 px-4 py-2.5 text-foreground placeholder:text-muted-foreground",
-                  "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+                  "w-full rounded-2xl border border-border/80 bg-background/80 px-4 py-2.5 text-foreground placeholder:text-muted-foreground transition-all duration-200",
+                  "focus:border-violet-400/50 focus:outline-none focus:ring-2 focus:ring-violet-400/20 hover:border-violet-400/20"
                 )}
               />
             </div>

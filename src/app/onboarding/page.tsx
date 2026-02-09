@@ -14,8 +14,8 @@ const SEX_OPTIONS = [
 ] as const;
 
 const inputClass = cn(
-  "w-full rounded-2xl border border-border bg-background/80 px-4 py-3 text-foreground placeholder:text-muted-foreground",
-  "focus:border-violet-400/40 focus:outline-none focus:ring-2 focus:ring-violet-400/20"
+  "w-full rounded-2xl border border-border/80 bg-background/80 px-4 py-3 text-foreground placeholder:text-muted-foreground transition-all duration-200",
+  "focus:border-violet-400/50 focus:outline-none focus:ring-2 focus:ring-violet-400/20 hover:border-violet-400/20"
 );
 
 export default function OnboardingPage() {
@@ -67,8 +67,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="pointer-events-none absolute -top-[30%] left-1/2 h-[60vmax] w-[60vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/8 blur-[120px]" />
+    <div className="relative min-h-screen overflow-hidden bg-background gradient-mesh">
+      <div className="pointer-events-none absolute -top-[30%] left-1/2 h-[65vmax] w-[65vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/10 blur-[140px]" />
       <div className="relative z-10 flex min-h-screen flex-col py-12">
         <motion.div
           initial={{ opacity: 0, y: 10 }}

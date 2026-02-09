@@ -78,9 +78,9 @@ export default function AssessPage() {
             initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -24 }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            transition={{ type: "spring", stiffness: 320, damping: 32 }}
           >
-            <Card className="card-hover glass border-purple-500/10">
+            <Card className="card-hover glass border-border/60 border-violet-500/10 shadow-xl shadow-violet-500/10">
               <CardHeader>
                 <p className="text-xs font-medium uppercase tracking-wider text-[#a78bfa]/80">
                   Step {stepIndex + 1} of 2

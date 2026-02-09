@@ -27,11 +27,11 @@ const FEATURE_CARDS = [
 
 export default function LandingPage() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      {/* Soft ambient glows — warm violet + hint of rose */}
-      <div className="pointer-events-none absolute -top-[40%] left-1/2 h-[70vmax] w-[70vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/10 blur-[140px]" />
-      <div className="pointer-events-none absolute bottom-[20%] right-[-20%] h-[50vmax] w-[50vmax] rounded-full bg-[#2d2640]/60 blur-[100px]" />
-      <div className="pointer-events-none absolute top-[50%] left-[-10%] h-[40vmax] w-[40vmax] rounded-full bg-[#7c3aed]/5 blur-[80px]" />
+    <div className="relative min-h-screen overflow-hidden bg-background gradient-mesh">
+      {/* Soft ambient glows — layered, smoother */}
+      <div className="pointer-events-none absolute -top-[35%] left-1/2 h-[75vmax] w-[75vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/12 blur-[160px] transition-opacity duration-1000" />
+      <div className="pointer-events-none absolute bottom-[15%] right-[-15%] h-[55vmax] w-[55vmax] rounded-full bg-[#2d2640]/50 blur-[120px]" />
+      <div className="pointer-events-none absolute top-[45%] left-[-8%] h-[45vmax] w-[45vmax] rounded-full bg-[#7c3aed]/6 blur-[100px]" />
 
       <div className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-6">
         <header className="flex items-center justify-between py-6">
@@ -50,29 +50,29 @@ export default function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
-            className="inline-flex items-center gap-2 rounded-full border border-violet-400/15 bg-violet-500/5 px-3.5 py-2 text-xs tracking-wide text-violet-200/90"
+            transition={{ duration: 0.65, ease: [0.16, 1, 0.3, 1] }}
+            className="inline-flex items-center gap-2 rounded-full border border-violet-400/12 bg-violet-500/8 px-4 py-2 text-xs font-medium tracking-wide text-violet-200/95 backdrop-blur-sm"
           >
-            <Sparkles className="h-3.5 w-3.5" />
+            <Sparkles className="h-3.5 w-3.5 text-violet-300/90" />
             Romance is creation, not consumption
           </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.06, ease: [0.32, 0.72, 0, 1] }}
-            className="mt-7 font-serif text-4xl font-semibold leading-[1.2] tracking-tight text-foreground sm:text-5xl md:text-6xl"
+            transition={{ duration: 0.7, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-8 font-serif text-4xl font-semibold leading-[1.15] tracking-tight text-foreground sm:text-5xl md:text-6xl"
           >
             Know how you love.
             <br />
-            <span className="text-muted-foreground">See how you match.</span>
+            <span className="text-muted-foreground/95">See how you match.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.14, ease: [0.32, 0.72, 0, 1] }}
-            className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground"
+            transition={{ duration: 0.6, delay: 0.16, ease: [0.16, 1, 0.3, 1] }}
+            className="mt-6 max-w-md text-base leading-[1.65] text-muted-foreground"
           >
             For the two of you: five love languages, a shared dashboard, and AI that suggests ways to grow together — without the usual “buy this” noise.
           </motion.p>
@@ -83,10 +83,10 @@ export default function LandingPage() {
             transition={{ duration: 0.55, delay: 0.22, ease: [0.32, 0.72, 0, 1] }}
             className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center"
           >
-            <Button size="lg" asChild className="group min-w-[180px]">
+            <Button size="lg" asChild className="group min-w-[180px] shadow-lg shadow-violet-500/20">
               <Link href="/login">
                 Begin
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
               </Link>
             </Button>
             <Link
@@ -117,11 +117,11 @@ export default function LandingPage() {
               className="w-full"
             >
               {FEATURE_CARDS.map((card, i) => (
-                <Card key={i} className="flex flex-col justify-center p-8">
+                <Card key={i} className="flex flex-col justify-center p-8 glass border-violet-500/10 shadow-xl shadow-violet-500/5">
                   <h3 className="font-serif text-xl font-semibold tracking-tight text-foreground">
                     {card.title}
                   </h3>
-                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
+                  <p className="mt-3 text-base leading-[1.6] text-muted-foreground">
                     {card.body}
                   </p>
                 </Card>
@@ -133,8 +133,8 @@ export default function LandingPage() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.35, ease: [0.32, 0.72, 0, 1] }}
-          className="border-t border-border/60 pt-12"
+          transition={{ duration: 0.65, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="border-t border-border/50 pt-12"
         >
           <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
             What you get

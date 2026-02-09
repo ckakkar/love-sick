@@ -26,9 +26,9 @@ function LoginForm() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="pointer-events-none absolute -top-[30%] left-1/2 h-[60vmax] w-[60vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/8 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-[10%] right-[-10%] h-[40vmax] w-[40vmax] rounded-full bg-[#2d2640]/50 blur-[80px]" />
+    <div className="relative min-h-screen overflow-hidden bg-background gradient-mesh">
+      <div className="pointer-events-none absolute -top-[30%] left-1/2 h-[65vmax] w-[65vmax] -translate-x-1/2 rounded-full bg-[#a78bfa]/10 blur-[140px]" />
+      <div className="pointer-events-none absolute bottom-[10%] right-[-10%] h-[45vmax] w-[45vmax] rounded-full bg-[#2d2640]/50 blur-[100px]" />
 
       <div className="relative z-10 flex min-h-screen flex-col">
         <header className="flex items-center justify-between px-6 py-5">
@@ -47,12 +47,12 @@ function LoginForm() {
 
         <main className="flex flex-1 items-center justify-center px-6 pb-16">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.32, 0.72, 0, 1] }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
             className="w-full max-w-[380px]"
           >
-            <div className="rounded-3xl border border-border/60 bg-card/70 p-8 shadow-2xl shadow-violet-500/5 backdrop-blur-xl">
+            <div className="rounded-3xl border border-border/50 bg-card/80 p-8 shadow-2xl shadow-violet-500/10 backdrop-blur-2xl glass">
               <h1 className="text-center font-serif text-2xl font-semibold leading-snug tracking-tight text-foreground">
                 Enter the garden
               </h1>
@@ -64,7 +64,7 @@ function LoginForm() {
                 <Button
                   type="button"
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-border/80 hover:bg-violet-500/10 hover:border-violet-400/25"
                   onClick={() => handleOAuth("google")}
                   disabled={!!oauthLoading}
                 >

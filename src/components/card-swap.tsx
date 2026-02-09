@@ -33,7 +33,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const cardBaseClass =
-  "absolute top-1/2 left-1/2 rounded-2xl border border-border/60 bg-card/90 text-card-foreground shadow-xl shadow-violet-500/10 [transform-style:preserve-3d] [will-change:transform] [backface-visibility:hidden]";
+  "absolute top-1/2 left-1/2 rounded-2xl border border-border/50 bg-card/85 text-card-foreground shadow-xl shadow-violet-500/10 backdrop-blur-sm [transform-style:preserve-3d] [will-change:transform] [backface-visibility:hidden] transition-shadow duration-300";
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
   ({ customClass, className, ...rest }, ref) => (

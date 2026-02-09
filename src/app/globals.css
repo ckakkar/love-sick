@@ -2,28 +2,28 @@
 
 /* Soft & warm — Romance is Creation, not Consumption */
 :root {
-  --background: #0c0a14; /* warm deep purple-black */
-  --foreground: #f5f3ff; /* soft lavender-white */
-  --card: #15121f;
-  --card-foreground: #f5f3ff;
-  --popover: #15121f;
-  --popover-foreground: #f5f3ff;
-  --primary: #a78bfa; /* softer violet */
+  --background: #0a0812; /* deeper, richer base */
+  --foreground: #f8f6ff; /* softer lavender-white */
+  --card: #12101a;
+  --card-foreground: #f8f6ff;
+  --popover: #12101a;
+  --popover-foreground: #f8f6ff;
+  --primary: #a78bfa;
   --primary-foreground: #fff;
-  --secondary: #1e1b2e;
+  --secondary: #1a1724;
   --secondary-foreground: #e9e6f5;
-  --muted: #252232;
-  --muted-foreground: #a8a3b8;
-  --accent: #2d2640;
+  --muted: #1e1b28;
+  --muted-foreground: #9d98b0;
+  --accent: #252232;
   --accent-foreground: #e9e6f5;
   --destructive: #7f1d1d;
-  --border: #2d2640;
-  --input: #252232;
+  --border: #2a2638;
+  --input: #1e1b28;
   --ring: #a78bfa;
-  --radius: 1rem; /* rounder, softer */
-  /* Sync state — warm amber (Heartbeat Sync) */
+  --radius: 1rem;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --sync-glow: #fcd34d;
-  /* Charts */
   --chart-1: #a78bfa;
   --chart-2: #c4b5fd;
   --chart-3: #ddd6fe;
@@ -74,6 +74,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
 }
 
 /* Headers: Literature / Poetry serif */
@@ -82,37 +83,39 @@ h1, h2, h3, h4, .heading-serif {
   font-family: var(--font-serif), Georgia, serif;
 }
 
-/* Glassmorphism — soft */
+/* Glassmorphism — soft, modern */
 .glass {
-  background: rgba(21, 18, 31, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(167, 139, 250, 0.1);
+  background: rgba(18, 16, 26, 0.72);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(167, 139, 250, 0.08);
+  transition: background 0.4s var(--ease-out-expo), border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
-/* Soft gradient mesh — warm violet + hint of rose */
+/* Soft gradient mesh — warm violet + subtle depth */
 .gradient-mesh {
   background:
-    radial-gradient(ellipse 90% 60% at 50% -15%, rgba(167, 139, 250, 0.08), transparent 50%),
-    radial-gradient(ellipse 70% 50% at 100% 10%, rgba(45, 38, 64, 0.4), transparent 45%),
-    radial-gradient(ellipse 70% 50% at 0% 80%, rgba(126, 34, 206, 0.06), transparent 45%),
+    radial-gradient(ellipse 100% 70% at 50% -20%, rgba(167, 139, 250, 0.12), transparent 55%),
+    radial-gradient(ellipse 80% 50% at 100% 5%, rgba(42, 38, 56, 0.5), transparent 50%),
+    radial-gradient(ellipse 80% 50% at 0% 85%, rgba(126, 34, 206, 0.08), transparent 50%),
     var(--background);
 }
 
 /* Sync state: warm amber glow (Heartbeat Sync) */
 .sync-glow {
-  box-shadow: 0 0 28px 4px rgba(252, 211, 77, 0.25);
+  box-shadow: 0 0 32px 6px rgba(252, 211, 77, 0.22);
   border-color: var(--sync-glow);
+  transition: box-shadow 0.5s var(--ease-out-expo), border-color 0.3s ease;
 }
 
-/* Softer card hover — gentle lift */
+/* Softer card hover — gentle lift, smooth */
 .card-hover {
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+  transition: transform 0.4s var(--ease-spring), box-shadow 0.4s var(--ease-out-expo), border-color 0.4s ease;
 }
 .card-hover:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 24px 48px -16px rgba(167, 139, 250, 0.15);
-  border-color: rgba(167, 139, 250, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 28px 56px -20px rgba(167, 139, 250, 0.18), 0 0 0 1px rgba(167, 139, 250, 0.06);
+  border-color: rgba(167, 139, 250, 0.18);
 }
 
 @keyframes shimmer {
@@ -133,6 +136,80 @@ h1, h2, h3, h4, .heading-serif {
 
 *:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgba(167, 139, 250, 0.4);
-  transition: box-shadow 0.25s ease;
+  box-shadow: 0 0 0 2px var(--background), 0 0 0 4px rgba(167, 139, 250, 0.35);
+  transition: box-shadow 0.3s var(--ease-out-expo);
+}
+
+/* Smoother scroll and selection */
+::selection {
+  background: rgba(167, 139, 250, 0.25);
+  color: var(--foreground);
+}
+
+/* Subtle fade-in for page load */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.page-enter {
+  animation: fade-in 0.5s var(--ease-out-expo) forwards;
+}
+
+/* Dashboard: textured background — noise + aurora */
+.dashboard-bg {
+  position: relative;
+  overflow: hidden;
+}
+.dashboard-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 120% 80% at 20% 20%, rgba(167, 139, 250, 0.14), transparent 50%),
+    radial-gradient(ellipse 100% 60% at 80% 60%, rgba(126, 34, 206, 0.08), transparent 45%),
+    radial-gradient(ellipse 80% 80% at 50% 50%, rgba(196, 181, 253, 0.04), transparent 60%);
+  background-size: 200% 200%;
+  animation: aurora 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+.dashboard-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+@keyframes aurora {
+  0%, 100% { background-position: 0% 50%; opacity: 1; }
+  50% { background-position: 100% 50%; opacity: 0.95; }
+}
+
+/* Bento grid — dense masonry-style layout */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: minmax(140px, auto);
+  gap: 0.875rem;
+  grid-auto-flow: dense;
+}
+@media (max-width: 1023px) {
+  .bento-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(120px, auto);
+  }
+}
+.bento-cell {
+  min-height: 0;
+}
+.bento-cell.row-span-2 {
+  grid-row: span 2;
+  min-height: 320px;
+}
+@media (max-width: 1023px) {
+  .bento-cell.row-span-2 {
+    grid-row: span 1;
+    min-height: 0;
+  }
 }

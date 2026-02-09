@@ -36,7 +36,7 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border/80 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <header className="sticky top-0 z-30 border-b border-border/60 bg-background/90 backdrop-blur-xl supports-backdrop-filter:bg-background/80">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="font-serif text-lg font-semibold tracking-tight text-foreground">
             Love Sick
@@ -69,7 +69,7 @@ export function DashboardShell({
                 <DropdownMenu.Content
                   align="end"
                   sideOffset={8}
-                  className="min-w-[200px] rounded-xl border border-border bg-card p-1 shadow-xl"
+                  className="min-w-[200px] rounded-xl border border-border/80 bg-card/95 p-1 shadow-xl shadow-violet-500/5 backdrop-blur-xl"
                 >
                   <div className="border-b border-border/80 px-3 py-2">
                     <p className="truncate text-sm font-medium text-foreground">{displayName}</p>
