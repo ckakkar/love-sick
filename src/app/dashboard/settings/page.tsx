@@ -99,6 +99,16 @@ export default function SettingsPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = window.location.hash?.slice(1);
+    if (id !== "notifications") return;
+    const t = setTimeout(() => {
+      document.getElementById("notifications")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [notifications.length]);
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -177,6 +187,7 @@ export default function SettingsPage() {
       setUnlinkModalOpen(false);
       setUnlinkReason("");
       setHasPartner(false);
+      router.push("/dashboard");
       router.refresh();
     } else {
       setUnlinkError(data.error || "Something went wrong.");
@@ -422,7 +433,7 @@ export default function SettingsPage() {
         </Card>
 
         {notifications.length > 0 && (
-          <Card className="card-hover border-amber-500/20 bg-amber-500/5">
+          <Card id="notifications" className="card-hover border-amber-500/20 bg-amber-500/5 scroll-mt-24">
             <CardHeader>
               <CardTitle className="font-serif">Relationship messages</CardTitle>
               <CardDescription>Messages from your partner or about your link.</CardDescription>

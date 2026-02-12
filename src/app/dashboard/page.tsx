@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, full_name, age, sex, notify_partner_online")
+    .select("id, username, full_name, display_name, age, sex, notify_partner_online")
     .eq("id", user.id)
     .single();
 
@@ -94,6 +94,8 @@ export default async function DashboardPage() {
     partnerPrologueContent = partnerPrologue?.content ?? null;
   }
 
+  const displayName = profile?.full_name || profile?.display_name || profile?.username || null;
+
   return (
     <DashboardClient
       myGiving={myGiving}
@@ -108,6 +110,7 @@ export default async function DashboardPage() {
       partnerPrologueContent={partnerPrologueContent}
       partnerRequests={partnerRequests}
       myUsername={profile?.username ?? null}
+      displayName={displayName}
       hasAssessment={!!myAssessment}
       notifyPartnerOnline={profile?.notify_partner_online !== false}
     />

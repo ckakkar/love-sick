@@ -133,6 +133,7 @@ export function DashboardClient({
   partnerPrologueContent,
   partnerRequests,
   myUsername,
+  displayName,
   hasAssessment,
   notifyPartnerOnline = true,
 }: {
@@ -148,6 +149,7 @@ export function DashboardClient({
   partnerPrologueContent: string | null;
   partnerRequests: { sent: PartnerRequestSent[]; received: PartnerRequestReceived[] };
   myUsername: string | null;
+  displayName?: string | null;
   hasAssessment: boolean;
   notifyPartnerOnline?: boolean;
 }) {
@@ -209,7 +211,7 @@ export function DashboardClient({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-border/80 bg-card/95 px-4 py-2.5 text-sm shadow-xl shadow-violet-500/10 backdrop-blur-xl safe-area-bottom"
+          className="fixed bottom-20 left-1/2 z-50 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-xl border border-border/80 bg-card/95 px-4 py-2.5 text-sm shadow-xl shadow-violet-500/10 backdrop-blur-xl md:bottom-6 safe-area-bottom"
         >
           {toast}
         </motion.div>
@@ -250,8 +252,16 @@ export function DashboardClient({
           className="mb-6 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-center sm:justify-between"
         >
           <div className="min-w-0">
-            <h1 className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Dashboard</h1>
-            <p className="text-sm text-muted-foreground sm:text-base">Understand each other’s love language</p>
+            <h1 className="font-serif text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+              {displayName ? (
+                <>Hey, {displayName.split(/\s+/)[0]}</>
+              ) : (
+                "Dashboard"
+              )}
+            </h1>
+            <p className="text-sm text-muted-foreground sm:text-base">
+              {hasPartner ? "See how you and your partner love" : "Understand your love language"}
+            </p>
           </div>
           <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
             {partnerOnline && (
@@ -368,17 +378,34 @@ export function DashboardClient({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Chart</span>
-                  <select
-                    value={fingerprintChartType}
-                    onChange={(e) => setFingerprintChartType(e.target.value as "radar" | "bar")}
-                    className={cn(
-                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-all duration-200",
-                      "hover:border-violet-400/30 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
-                    )}
-                  >
-                    <option value="radar">Radar</option>
-                    <option value="bar">Bar</option>
-                  </select>
+                  <div className="relative flex rounded-xl p-1 bg-muted/50 border border-border/50 shadow-inner">
+                    <motion.div
+                      className="absolute top-1 bottom-1 rounded-lg bg-gradient-to-r from-violet-500 to-violet-600 shadow-md shadow-violet-500/30"
+                      style={{ width: "calc(50% - 4px)" }}
+                      animate={{ left: fingerprintChartType === "radar" ? 4 : "calc(50% + 2px)" }}
+                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setFingerprintChartType("radar")}
+                      className={cn(
+                        "relative z-10 min-w-[72px] rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+                        fingerprintChartType === "radar" ? "text-white" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Radar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFingerprintChartType("bar")}
+                      className={cn(
+                        "relative z-10 min-w-[72px] rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+                        fingerprintChartType === "bar" ? "text-white" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Bar
+                    </button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-4 sm:pt-5">
@@ -398,6 +425,7 @@ export function DashboardClient({
                           angle={90}
                           domain={[0, 10]}
                           tick={false}
+                          axisLine={false}
                         />
                         <Radar
                           name="You (Giving)"
@@ -480,17 +508,34 @@ export function DashboardClient({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">Chart</span>
-                  <select
-                    value={receivingChartType}
-                    onChange={(e) => setReceivingChartType(e.target.value as "radar" | "bar")}
-                    className={cn(
-                      "flex h-9 cursor-pointer items-center gap-2 rounded-xl border border-border/60 bg-background/80 pl-3 pr-8 text-sm text-foreground outline-none transition-all duration-200",
-                      "hover:border-violet-400/30 focus:border-violet-400/50 focus:ring-2 focus:ring-violet-400/20"
-                    )}
-                  >
-                    <option value="radar">Radar</option>
-                    <option value="bar">Bar</option>
-                  </select>
+                  <div className="relative flex rounded-xl p-1 bg-muted/50 border border-border/50 shadow-inner">
+                    <motion.div
+                      className="absolute top-1 bottom-1 rounded-lg bg-gradient-to-r from-violet-500 to-violet-600 shadow-md shadow-violet-500/30"
+                      style={{ width: "calc(50% - 4px)" }}
+                      animate={{ left: receivingChartType === "radar" ? 4 : "calc(50% + 2px)" }}
+                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setReceivingChartType("radar")}
+                      className={cn(
+                        "relative z-10 min-w-[72px] rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+                        receivingChartType === "radar" ? "text-white" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Radar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReceivingChartType("bar")}
+                      className={cn(
+                        "relative z-10 min-w-[72px] rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
+                        receivingChartType === "bar" ? "text-white" : "text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      Bar
+                    </button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-4 sm:pt-5">
@@ -510,6 +555,7 @@ export function DashboardClient({
                           angle={90}
                           domain={[0, 10]}
                           tick={false}
+                          axisLine={false}
                         />
                         <Radar
                           name="You (Receiving)"

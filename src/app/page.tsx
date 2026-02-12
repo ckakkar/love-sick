@@ -85,7 +85,7 @@ export default function LandingPage() {
           >
             <Button size="lg" asChild className="group w-full min-w-0 shadow-lg shadow-violet-500/20 sm:min-w-[180px] sm:w-auto">
               <Link href="/login">
-                Begin
+                Sign up
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
               </Link>
             </Button>
@@ -131,24 +131,24 @@ export default function LandingPage() {
         </main>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.65, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="border-t border-border/50 pt-12"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="border-t border-border/30 pt-6 pb-8 sm:pt-8 sm:pb-10 md:pt-10"
         >
-          <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground/70">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60 sm:text-xs">
             What you get
           </p>
-          <ul className="mt-5 grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-3">
-              {[
-                "Five languages — words, service, gifts, time, touch",
-                "Your fingerprint — radar and gap analysis with your partner",
-                "AI insights — how to grow together, not what to buy",
-              ].map((line, i) => (
-                <li key={i} className="leading-relaxed text-muted-foreground pl-4 border-l-2 border-violet-500/20">
-                  {line}
-                </li>
-              ))}
+          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs leading-relaxed text-muted-foreground/90 sm:mt-4 sm:gap-x-8 sm:text-sm">
+            {[
+              "Five languages — words, service, gifts, time, touch",
+              "Your fingerprint — radar and gap analysis with your partner",
+              "AI insights — how to grow together, not what to buy",
+            ].map((line, i) => (
+              <li key={i} className="relative pl-3 before:absolute before:left-0 before:top-[0.4em] before:h-1 before:w-1 before:rounded-full before:bg-violet-500/40">
+                {line}
+              </li>
+            ))}
           </ul>
         </motion.div>
       </div>
