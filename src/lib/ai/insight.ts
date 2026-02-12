@@ -20,21 +20,27 @@ export interface SoloAnalystOutput {
 const DEEPSEEK_API = "https://api.deepseek.com/v1/chat/completions";
 const OPENAI_API = "https://api.openai.com/v1/chat/completions";
 
+export type DeepCutExchange = { prompt: string; answerA: string; answerB: string };
+
 export async function generateCoupleInsight(
   userStats: { giving: LoveScores; receiving: LoveScores },
-  partnerStats: { giving: LoveScores; receiving: LoveScores }
+  partnerStats: { giving: LoveScores; receiving: LoveScores },
+  deepCutExchanges: DeepCutExchange[] = []
 ): Promise<{ analyst: AnalystOutput; coach: CoachOutput }> {
   const analyst = await runAnalyst(userStats, partnerStats);
-  const coach = await runCoach(analyst);
+  const coach = await runCoach(analyst, deepCutExchanges);
   return { analyst, coach };
 }
 
+export type SoloDeepCut = { prompt: string; answer: string };
+
 export async function generateSoloInsight(
   giving: LoveScores,
-  receiving: LoveScores
+  receiving: LoveScores,
+  myDeepCuts: SoloDeepCut[] = []
 ): Promise<CoachOutput> {
   const analyst = await runSoloAnalyst(giving, receiving);
-  return runSoloCoach(analyst);
+  return runSoloCoach(analyst, myDeepCuts);
 }
 
 async function runSoloAnalyst(giving: LoveScores, receiving: LoveScores): Promise<SoloAnalystOutput> {
@@ -95,9 +101,14 @@ function getFallbackSoloAnalyst(): SoloAnalystOutput {
   };
 }
 
-async function runSoloCoach(analyst: SoloAnalystOutput): Promise<CoachOutput> {
+async function runSoloCoach(analyst: SoloAnalystOutput, myDeepCuts: SoloDeepCut[] = []): Promise<CoachOutput> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return getFallbackSoloCoach();
+
+  const deepCutsBlock =
+    myDeepCuts.length > 0
+      ? `\n\nOptional context — this person's "Deep Cuts" answers (question + their answer). Use to personalize the prescription and rituals:\n${JSON.stringify(myDeepCuts)}`
+      : "";
 
   const payload = {
     model: "gpt-4o",
@@ -108,7 +119,7 @@ async function runSoloCoach(analyst: SoloAnalystOutput): Promise<CoachOutput> {
 Context: A single person's love language analysis (strengths, one area to grow, summary). Your job: write a short "Personal prescription" (2–3 paragraphs) that helps them grow in self-love and readiness to love others. Then suggest exactly 3 actionable, non-consumerist rituals or practices (title + one sentence "why"). STRICTLY FORBIDDEN: buying gifts, expensive dinners, booking trips, generic consumerist dates. Focus on creation, presence, and small daily rituals.
 Tone: Witty, deep, slightly poetic. No corporate speak.
 Output valid JSON only, no markdown:
-{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}`,
+{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}${deepCutsBlock}`,
       },
       {
         role: "user",
@@ -226,11 +237,16 @@ function getFallbackAnalyst(): AnalystOutput {
   };
 }
 
-async function runCoach(analyst: AnalystOutput): Promise<CoachOutput> {
+async function runCoach(analyst: AnalystOutput, deepCutExchanges: DeepCutExchange[] = []): Promise<CoachOutput> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) {
     return getFallbackCoach();
   }
+
+  const deepCutsBlock =
+    deepCutExchanges.length > 0
+      ? `\n\nOptional context — the couple's "Deep Cuts" answers (question and both partners' answers). Use these to personalize the prescription and date ideas; reference their words and fears where relevant:\n${JSON.stringify(deepCutExchanges)}`
+      : "";
 
   const payload = {
     model: "gpt-4o",
@@ -249,7 +265,7 @@ Your Rules:
 Tone: Witty, deep, and slightly poetic. No corporate speak.
 
 You receive analysis data (top variances and love deficit). Write a short "Relationship Prescription": 2-3 paragraphs. Then suggest exactly 3 actionable, non-consumerist "dates" or rituals (title + one sentence "why" for each). Output valid JSON only, no markdown:
-{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}`,
+{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}${deepCutsBlock}`,
       },
       {
         role: "user",

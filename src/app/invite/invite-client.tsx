@@ -46,11 +46,16 @@ export function InviteClient({
           }
           if (data.ok) {
             router.push("/assess?from=invite");
+            router.refresh();
           } else {
             router.push("/dashboard");
+            router.refresh();
           }
         })
-        .catch(() => router.push("/dashboard"))
+        .catch(() => {
+          router.push("/dashboard");
+          router.refresh();
+        })
         .finally(() => setLinking(false));
     }
   }, [code, invalid, isLoggedIn, isPartner, router]);

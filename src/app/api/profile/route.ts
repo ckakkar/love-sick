@@ -14,7 +14,7 @@ export async function GET() {
   }
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, username, full_name, display_name, age, sex, avatar_url, notify_partner_request, notify_partner_online")
+    .select("id, username, full_name, display_name, age, sex, avatar_url, notify_partner_request, notify_partner_online, timezone")
     .eq("id", user.id)
     .single();
   if (error) {
@@ -40,6 +40,7 @@ export async function PATCH(request: Request) {
   const avatarUrl = typeof body.avatar_url === "string" ? body.avatar_url.trim() || null : undefined;
   const notifyPartnerRequest = typeof body.notify_partner_request === "boolean" ? body.notify_partner_request : undefined;
   const notifyPartnerOnline = typeof body.notify_partner_online === "boolean" ? body.notify_partner_online : undefined;
+  const timezone = typeof body.timezone === "string" ? body.timezone.trim() || null : undefined;
 
   const updates: Record<string, unknown> = {
     updated_at: new Date().toISOString(),
@@ -60,12 +61,13 @@ export async function PATCH(request: Request) {
   if (avatarUrl !== undefined) updates.avatar_url = avatarUrl;
   if (notifyPartnerRequest !== undefined) updates.notify_partner_request = notifyPartnerRequest;
   if (notifyPartnerOnline !== undefined) updates.notify_partner_online = notifyPartnerOnline;
+  if (timezone !== undefined) updates.timezone = timezone;
 
   const { data, error } = await supabase
     .from("profiles")
     .update(updates)
     .eq("id", user.id)
-    .select("id, username, full_name, age, sex, display_name, avatar_url, notify_partner_request, notify_partner_online")
+    .select("id, username, full_name, age, sex, display_name, avatar_url, notify_partner_request, notify_partner_online, timezone")
     .single();
 
   if (error) {

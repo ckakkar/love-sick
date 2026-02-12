@@ -11,8 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { SexSelector } from "@/components/ui/sex-selector";
 import { cn } from "@/lib/utils";
-import { User, UserCircle, Calendar, Unlink, Trash2 } from "lucide-react";
+import { User, UserCircle, Calendar, Unlink, Trash2, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { TIMEZONE_GROUPS, ALL_TIMEZONE_VALUES, getBrowserTimezone, isValidTimezone } from "@/lib/timezones";
 
 const UNLINK_MIN_WORDS = 50;
 
@@ -28,6 +29,7 @@ type ProfileForm = {
   full_name: string;
   age: string;
   sex: string;
+  timezone: string;
   notify_partner_request: boolean;
   notify_partner_online: boolean;
 };
@@ -39,6 +41,7 @@ export default function SettingsPage() {
     full_name: "",
     age: "",
     sex: "",
+    timezone: "",
     notify_partner_request: true,
     notify_partner_online: true,
   });
@@ -74,6 +77,7 @@ export default function SettingsPage() {
             full_name: d.full_name ?? "",
             age: d.age != null ? String(d.age) : "",
             sex: d.sex ?? "",
+            timezone: d.timezone ?? getBrowserTimezone(),
             notify_partner_request: d.notify_partner_request !== false,
             notify_partner_online: d.notify_partner_online !== false,
           }));
@@ -150,6 +154,7 @@ export default function SettingsPage() {
         full_name: form.full_name.trim(),
         age: ageNum ?? null,
         sex: form.sex || null,
+        timezone: form.timezone && isValidTimezone(form.timezone) ? form.timezone : null,
         notify_partner_request: form.notify_partner_request,
         notify_partner_online: form.notify_partner_online,
       }),
@@ -187,8 +192,8 @@ export default function SettingsPage() {
       setUnlinkModalOpen(false);
       setUnlinkReason("");
       setHasPartner(false);
-      router.push("/dashboard");
-      router.refresh();
+      // Full reload so dashboard fetches fresh data (no partner); client router cache would otherwise show stale linked state
+      window.location.assign("/dashboard");
     } else {
       setUnlinkError(data.error || "Something went wrong.");
     }
@@ -222,6 +227,7 @@ export default function SettingsPage() {
       body: JSON.stringify({ id }),
     });
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n)));
+    router.refresh();
   };
 
   if (profileLoading) {
@@ -354,6 +360,35 @@ export default function SettingsPage() {
                   <span className="text-xs text-muted-foreground">(Optional)</span>
                 </div>
                 <SexSelector value={form.sex} onChange={(v) => setForm((f) => ({ ...f, sex: v }))} />
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-violet-400" />
+                  <label htmlFor="timezone" className="text-sm font-medium text-foreground">Timezone</label>
+                </div>
+                <select
+                  id="timezone"
+                  value={form.timezone}
+                  onChange={(e) => setForm((f) => ({ ...f, timezone: e.target.value }))}
+                  className={inputClass}
+                  aria-label="Your timezone"
+                >
+                  {form.timezone && !ALL_TIMEZONE_VALUES.includes(form.timezone) && isValidTimezone(form.timezone) && (
+                    <optgroup label="Current">
+                      <option value={form.timezone}>{form.timezone.replace(/_/g, " ")}</option>
+                    </optgroup>
+                  )}
+                  {TIMEZONE_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.zones.map((z) => (
+                        <option key={z.value} value={z.value}>
+                          {z.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">Used for your local time and partner time difference on the dashboard.</p>
               </div>
               {error && <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
               {success && <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Profile saved.</p>}

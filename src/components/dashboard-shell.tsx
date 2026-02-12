@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import * as Avatar from "@radix-ui/react-avatar";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Dialog from "@radix-ui/react-dialog";
 import { createClient } from "@/lib/supabase/client";
+import { useRealtimeNotifications } from "@/hooks/use-realtime-notifications";
 import { Settings, LayoutDashboard, LogOut, Bell, Home, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -44,7 +45,7 @@ export function DashboardShell({
     (n) => !n.read_at && (n.type === "unlink_reason" || n.type === "partner_left_app")
   ) ?? null;
 
-  useEffect(() => {
+  const refetchNotifications = useCallback(() => {
     fetch("/api/notifications")
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
@@ -53,6 +54,12 @@ export function DashboardShell({
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    refetchNotifications();
+  }, [refetchNotifications]);
+
+  useRealtimeNotifications(refetchNotifications);
 
   async function handleCloseUnlinkModal() {
     if (!unlinkNotification) return;

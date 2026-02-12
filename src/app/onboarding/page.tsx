@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Stepper, { Step } from "@/components/stepper";
 import { SexSelector } from "@/components/ui/sex-selector";
 import { cn } from "@/lib/utils";
-import { User, UserCircle, Calendar } from "lucide-react";
+import { User, UserCircle, Calendar, MapPin } from "lucide-react";
+import { getBrowserTimezone, TIMEZONE_GROUPS, ALL_TIMEZONE_VALUES, isValidTimezone } from "@/lib/timezones";
 
 const inputClass = cn(
   "w-full rounded-2xl border-2 border-border/60 bg-muted/30 px-4 py-3.5 text-foreground placeholder:text-muted-foreground transition-all duration-200",
@@ -19,8 +20,13 @@ export default function OnboardingPage() {
   const [fullName, setFullName] = useState("");
   const [age, setAge] = useState("");
   const [sex, setSex] = useState("");
+  const [timezone, setTimezone] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!timezone) setTimezone(getBrowserTimezone());
+  }, []);
 
   async function handleComplete(): Promise<void | false> {
     setError(null);
@@ -48,6 +54,7 @@ export default function OnboardingPage() {
         full_name: fullName.trim(),
         age: ageNum ?? null,
         sex: sex || null,
+        timezone: timezone && isValidTimezone(timezone) ? timezone : null,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -175,6 +182,48 @@ export default function OnboardingPage() {
                   </div>
                 </div>
                 <SexSelector value={sex} onChange={setSex} />
+              </div>
+            </Step>
+
+            <Step>
+              <div className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-violet-400">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-serif text-2xl font-semibold tracking-tight text-foreground">
+                      Where are you?
+                    </h2>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      We use this to show your local time and, when you link with a partner, the time difference so you can plan better.
+                    </p>
+                  </div>
+                </div>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className={inputClass}
+                  aria-label="Your timezone"
+                >
+                  {timezone && !ALL_TIMEZONE_VALUES.includes(timezone) && isValidTimezone(timezone) && (
+                    <optgroup label="Detected">
+                      <option value={timezone}>Your location: {timezone.replace(/_/g, " ")}</option>
+                    </optgroup>
+                  )}
+                  {TIMEZONE_GROUPS.map((group) => (
+                    <optgroup key={group.label} label={group.label}>
+                      {group.zones.map((z) => (
+                        <option key={z.value} value={z.value}>
+                          {z.label}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground">
+                  We detected your timezone. You can change it above if needed.
+                </p>
               </div>
             </Step>
           </Stepper>

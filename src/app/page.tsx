@@ -9,15 +9,15 @@ import CardSwap, { Card } from "@/components/card-swap";
 const FEATURE_CARDS = [
   {
     title: "Five love languages",
-    body: "Words, service, gifts, quality time, touch — discover how you give and receive love.",
+    body: "Words, service, gifts, quality time, touch — rate how you give and need to receive love.",
   },
   {
     title: "Your fingerprint",
-    body: "A shared radar and gap analysis so you and your partner see where you align and where to grow.",
+    body: "Shared radar charts and compatibility overlap: see where you’re matched, one-sided, or have a gap to grow.",
   },
   {
-    title: "Digital garden",
-    body: "Your love language as a plant. Pick a leaf and send it to your partner as a little reminder.",
+    title: "Question Exchange",
+    body: "Deep-cut prompts you both answer privately; answers unlock at once. We use them to supercharge your AI insights.",
   },
   {
     title: "AI that gets you",
@@ -139,17 +139,15 @@ export default function LandingPage() {
           <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/60 sm:text-xs">
             What you get
           </p>
-          <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs leading-relaxed text-muted-foreground/90 sm:mt-4 sm:gap-x-8 sm:text-sm">
-            {[
-              "Five languages — words, service, gifts, time, touch",
-              "Your fingerprint — radar and gap analysis with your partner",
-              "AI insights — how to grow together, not what to buy",
-            ].map((line, i) => (
-              <li key={i} className="relative pl-3 before:absolute before:left-0 before:top-[0.4em] before:h-1 before:w-1 before:rounded-full before:bg-violet-500/40">
-                {line}
-              </li>
-            ))}
-          </ul>
+          <p className="mt-3 text-xs leading-relaxed text-muted-foreground/90 sm:mt-4 sm:text-sm">
+            Five love languages
+            <span className="mx-2 text-violet-500/40">·</span>
+            Fingerprint & compatibility overlap with your partner
+            <span className="mx-2 text-violet-500/40">·</span>
+            Question Exchange (Deep Cuts)
+            <span className="mx-2 text-violet-500/40">·</span>
+            AI insights — how to grow together, not what to buy
+          </p>
         </motion.div>
       </div>
     </div>

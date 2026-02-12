@@ -22,7 +22,7 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Love Sick — Romance is Creation, not Consumption",
   description:
-    "For two people: rate love languages, unlock with words, grow a digital garden, and get anti-consumerist AI insights on how to love each other.",
+    "For two people: rate love languages, see your compatibility overlap, answer deep-cut questions together, and get AI insights on how to grow — not what to buy.",
 };
 
 export const viewport = {

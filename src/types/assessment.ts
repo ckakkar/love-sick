@@ -19,6 +19,35 @@ export const LOVE_LANGUAGE_LABELS: Record<LoveLanguageKey, string> = {
   touch: "Physical Touch",
 };
 
+const SCORE_MIN = 1;
+const SCORE_MAX = 10;
+const SCORE_DEFAULT = 5;
+
+function clampScore(v: unknown): number {
+  const n = typeof v === "number" && Number.isFinite(v) ? v : SCORE_DEFAULT;
+  return Math.max(SCORE_MIN, Math.min(SCORE_MAX, Math.round(n)));
+}
+
+/** Normalize raw DB/JSON scores to LoveScores (1–10 per key). Handles object, array-by-index, or missing keys. */
+export function normalizeLoveScores(raw: unknown): LoveScores {
+  const out = { ...DEFAULT_SCORES };
+  if (Array.isArray(raw) && raw.length >= 5) {
+    LOVE_LANGUAGE_KEYS.forEach((key, i) => {
+      out[key] = clampScore(raw[i]);
+    });
+    return out;
+  }
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    LOVE_LANGUAGE_KEYS.forEach((key) => {
+      const v = obj[key] ?? obj[key.toLowerCase()];
+      out[key] = clampScore(v);
+    });
+    return out;
+  }
+  return out;
+}
+
 export interface AssessmentRow {
   id: string;
   user_id: string;

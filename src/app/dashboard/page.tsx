@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { DashboardClient } from "./dashboard-client";
-import type { LoveScores } from "@/types/assessment";
+import { normalizeLoveScores, type LoveScores } from "@/types/assessment";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -12,7 +14,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, username, full_name, display_name, age, sex, notify_partner_online")
+    .select("id, username, full_name, display_name, age, sex, notify_partner_online, timezone")
     .eq("id", user.id)
     .single();
 
@@ -28,12 +30,12 @@ export default async function DashboardPage() {
     .limit(1);
 
   const myAssessment = assessments?.[0] ?? null;
-  const myGiving = (myAssessment?.giving_scores ?? null) as LoveScores | null;
-  const myReceiving = (myAssessment?.receiving_scores ?? null) as LoveScores | null;
+  const myGiving = myAssessment ? normalizeLoveScores(myAssessment.giving_scores) : null;
+  const myReceiving = myAssessment ? normalizeLoveScores(myAssessment.receiving_scores) : null;
 
   const { data: couples } = await supabase
     .from("couples")
-    .select("id, profile_a_id, profile_b_id, status, invite_code")
+    .select("id, profile_a_id, profile_b_id, status, invite_code, updated_at")
     .or(`profile_a_id.eq.${user.id},profile_b_id.eq.${user.id}`);
 
   const partnerId =
@@ -52,13 +54,18 @@ export default async function DashboardPage() {
       .single();
     partnerAssessment = partnerAssess
       ? {
-          giving_scores: partnerAssess.giving_scores as LoveScores,
-          receiving_scores: partnerAssess.receiving_scores as LoveScores,
+          giving_scores: normalizeLoveScores(partnerAssess.giving_scores),
+          receiving_scores: normalizeLoveScores(partnerAssess.receiving_scores),
         }
       : null;
   }
 
   const coupleId = couples?.[0]?.id ?? null;
+  const linkedAt = couples?.[0]?.updated_at ?? null;
+  const daysLinked =
+    linkedAt != null
+      ? Math.max(0, Math.floor((Date.now() - new Date(linkedAt).getTime()) / (24 * 60 * 60 * 1000)))
+      : null;
 
   let partnerRequests: { sent: { id: string; to_username: string | null; to_name: string | null; created_at: string }[]; received: { id: string; from_username: string | null; from_name: string | null; created_at: string }[] } = { sent: [], received: [] };
   try {
@@ -96,6 +103,16 @@ export default async function DashboardPage() {
 
   const displayName = profile?.full_name || profile?.display_name || profile?.username || null;
 
+  let partnerTimezone: string | null = null;
+  if (partnerId) {
+    const { data: partnerProfile } = await supabase
+      .from("profiles")
+      .select("timezone")
+      .eq("id", partnerId)
+      .single();
+    partnerTimezone = partnerProfile?.timezone ?? null;
+  }
+
   return (
     <DashboardClient
       myGiving={myGiving}
@@ -105,6 +122,7 @@ export default async function DashboardPage() {
       hasPartner={!!partnerId}
       partnerId={partnerId ?? null}
       coupleId={coupleId}
+      daysLinked={daysLinked}
       hasPrologue={hasPrologue}
       myPrologueContent={myPrologueContent}
       partnerPrologueContent={partnerPrologueContent}
@@ -113,6 +131,8 @@ export default async function DashboardPage() {
       displayName={displayName}
       hasAssessment={!!myAssessment}
       notifyPartnerOnline={profile?.notify_partner_online !== false}
+      myTimezone={profile?.timezone ?? null}
+      partnerTimezone={partnerTimezone}
     />
   );
 }

@@ -3,19 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heart } from "lucide-react";
 
-export type StreakCounterData = {
-  daysSinceLastSync?: number; // 0 = today
-  lastSyncAt?: string;       // ISO date
-};
-
 export function StreakCounterCard({
   hasPartner,
-  data,
+  daysLinked,
 }: {
   hasPartner: boolean;
-  data?: StreakCounterData | null;
+  daysLinked?: number | null;
 }) {
-  const days = data?.daysSinceLastSync ?? 0;
+  const days = daysLinked ?? 0;
   return (
     <Card className="card-hover glass h-full border-border/60 border-violet-500/10">
       <CardHeader className="pb-2">
@@ -28,11 +23,13 @@ export function StreakCounterCard({
         {hasPartner ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-border/50 bg-muted/30 py-4">
             <span className="font-mono text-3xl font-semibold tabular-nums text-foreground">{days}</span>
-            <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">days since last sync</span>
+            <span className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+              {days === 1 ? "day linked" : "days linked"}
+            </span>
           </div>
         ) : (
           <p className="text-xs leading-relaxed text-muted-foreground">
-            Once you’re linked, we’ll show how many days since you last synced together.
+            Once you’re linked, we’ll show how long you’ve been linked.
           </p>
         )}
       </CardContent>

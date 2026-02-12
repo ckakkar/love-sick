@@ -23,12 +23,11 @@ import {
 } from "recharts";
 import Link from "next/link";
 import { Sparkles, BookOpen } from "lucide-react";
-import { LOVE_LANGUAGE_KEYS, LOVE_LANGUAGE_LABELS, type LoveScores } from "@/types/assessment";
+import { LOVE_LANGUAGE_KEYS, LOVE_LANGUAGE_LABELS, normalizeLoveScores, type LoveScores } from "@/types/assessment";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DigitalGarden } from "@/components/digital-garden";
-import { WeathervaneCard } from "@/components/dashboard/weathervane-card";
+import { QuestionExchange } from "@/components/question-exchange";
 import { TimeDifferenceCard } from "@/components/dashboard/time-difference-card";
 import { StreakCounterCard } from "@/components/dashboard/streak-counter-card";
 import { usePartnerPresence } from "@/hooks/use-presence";
@@ -42,6 +41,48 @@ const LABELS_SHORT: Record<string, string> = {
   time: "Time",
   touch: "Touch",
 };
+
+const COMPAT_HIGH = 7;
+const COMPAT_LOW = 4;
+
+function getCompatibilityOverlap(
+  myG: LoveScores,
+  myR: LoveScores,
+  partnerG: LoveScores,
+  partnerR: LoveScores
+): { matched: string[]; oneSided: string[]; gap: string[] } {
+  const matched: string[] = [];
+  const oneSided: string[] = [];
+  const gap: string[] = [];
+  for (const key of LOVE_LANGUAGE_KEYS) {
+    const label = LOVE_LANGUAGE_LABELS[key];
+    const myGive = myG[key];
+    const myReceive = myR[key];
+    const partnerGive = partnerG[key];
+    const partnerReceive = partnerR[key];
+    if (
+      myGive >= COMPAT_HIGH &&
+      myReceive >= COMPAT_HIGH &&
+      partnerGive >= COMPAT_HIGH &&
+      partnerReceive >= COMPAT_HIGH
+    ) {
+      matched.push(`You both give and need ${label} highly`);
+    }
+    if (myGive >= COMPAT_HIGH && partnerReceive <= COMPAT_LOW) {
+      oneSided.push(`You give ${label} but they don't need it much`);
+    }
+    if (partnerGive >= COMPAT_HIGH && myReceive <= COMPAT_LOW) {
+      oneSided.push(`They give ${label} but you don't need it much`);
+    }
+    if (partnerReceive >= COMPAT_HIGH && myGive <= COMPAT_LOW) {
+      gap.push(`They need ${label} but you rarely give it`);
+    }
+    if (myReceive >= COMPAT_HIGH && partnerGive <= COMPAT_LOW) {
+      gap.push(`You need ${label} but they rarely give it`);
+    }
+  }
+  return { matched, oneSided, gap };
+}
 
 const PRELIM_BLURBS: Record<string, string> = {
   words: "You’re nourished by specific, sincere words — when someone actually says the thing out loud.",
@@ -101,9 +142,16 @@ const PARTNER_CHART_FILL_OPACITY = 0.35;
 const barActiveBarYou = { fill: "#c4b5fd", fillOpacity: 1, stroke: "rgba(167,139,250,0.5)", strokeWidth: 2 };
 const barActiveBarPartner = { fill: "#fde047", fillOpacity: 1, stroke: "rgba(252,211,77,0.6)", strokeWidth: 2 };
 
-function BarChartTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number }[]; label?: string }) {
+function BarChartTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { name: string; value: number; dataKey: string }[];
+  label?: string;
+}) {
   if (!active || !payload?.length || !label) return null;
-  const value = payload[0]?.value ?? 0;
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
@@ -112,7 +160,13 @@ function BarChartTooltip({ active, payload, label }: { active?: boolean; payload
       className="rounded-xl border border-border/80 bg-card px-3 py-2 shadow-xl shadow-violet-500/10"
     >
       <p className="text-xs font-medium text-foreground">{label}</p>
-      <p className="mt-0.5 font-mono text-sm tabular-nums text-muted-foreground">: {value}</p>
+      <div className="mt-1 space-y-0.5">
+        {payload.map((p) => (
+          <p key={p.dataKey} className="font-mono text-sm tabular-nums text-muted-foreground">
+            {p.name}: {typeof p.value === "number" ? p.value : "—"}
+          </p>
+        ))}
+      </div>
     </motion.div>
   );
 }
@@ -128,6 +182,7 @@ export function DashboardClient({
   hasPartner,
   partnerId,
   coupleId,
+  daysLinked = null,
   hasPrologue,
   myPrologueContent,
   partnerPrologueContent,
@@ -136,6 +191,8 @@ export function DashboardClient({
   displayName,
   hasAssessment,
   notifyPartnerOnline = true,
+  myTimezone = null,
+  partnerTimezone = null,
 }: {
   myGiving: LoveScores | null;
   myReceiving: LoveScores | null;
@@ -144,6 +201,7 @@ export function DashboardClient({
   hasPartner: boolean;
   partnerId: string | null;
   coupleId: string | null;
+  daysLinked: number | null;
   hasPrologue: boolean;
   myPrologueContent: string | null;
   partnerPrologueContent: string | null;
@@ -152,10 +210,14 @@ export function DashboardClient({
   displayName?: string | null;
   hasAssessment: boolean;
   notifyPartnerOnline?: boolean;
+  myTimezone?: string | null;
+  partnerTimezone?: string | null;
 }) {
-  const giving = myGiving ?? DEFAULT_SCORES;
-  const receiving = myReceiving ?? DEFAULT_SCORES;
+  const giving = myGiving != null ? normalizeLoveScores(myGiving) : DEFAULT_SCORES;
+  const receiving = myReceiving != null ? normalizeLoveScores(myReceiving) : DEFAULT_SCORES;
   const loading = myGiving === null && myReceiving === null;
+  const partnerGivingNorm = partnerGiving != null ? normalizeLoveScores(partnerGiving) : null;
+  const partnerReceivingNorm = partnerReceiving != null ? normalizeLoveScores(partnerReceiving) : null;
   const [insight, setInsight] = useState<CoachOutput | null>(null);
   const [insightLoading, setInsightLoading] = useState(false);
   const [soloInsight, setSoloInsight] = useState<CoachOutput | null>(null);
@@ -182,15 +244,11 @@ export function DashboardClient({
 
   const handlePrologueUnlock = () => {
     setDissolving(true);
+    router.refresh();
   };
 
-  const handleLeafSent = () => {
-    setToast("Leaf sent to your partner");
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const radarData = buildRadarData(giving, partnerGiving);
-  const receivingRadarData = buildRadarData(receiving, partnerReceiving);
+  const radarData = buildRadarData(giving, partnerGivingNorm);
+  const receivingRadarData = buildRadarData(receiving, partnerReceivingNorm);
 
   const container = {
     hidden: { opacity: 0 },
@@ -305,15 +363,16 @@ export function DashboardClient({
               </Card>
             </motion.div>
           )}
-          {/* Row 1: Weathervane, Time Difference, Streak */}
+          {/* Row 1: Time Difference, Streak */}
           <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
-            <WeathervaneCard hasPartner={hasPartner} data={null} />
+            <TimeDifferenceCard
+              hasPartner={hasPartner}
+              myTimezone={myTimezone}
+              partnerTimezone={partnerTimezone}
+            />
           </motion.div>
           <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
-            <TimeDifferenceCard hasPartner={hasPartner} data={null} />
-          </motion.div>
-          <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
-            <StreakCounterCard hasPartner={hasPartner} data={null} />
+            <StreakCounterCard hasPartner={hasPartner} daysLinked={daysLinked} />
           </motion.div>
           {hasPartner && (
             <motion.div variants={cardItem} className="bento-cell col-span-2 lg:col-span-1">
@@ -435,7 +494,7 @@ export function DashboardClient({
                           fillOpacity={0.35}
                           strokeWidth={2}
                         />
-                        {hasPartner && partnerGiving && (
+                        {hasPartner && partnerGivingNorm && (
                           <Radar
                             name="Partner (Giving)"
                             dataKey="partnerValue"
@@ -456,7 +515,7 @@ export function DashboardClient({
                   <div className="h-[240px] w-full sm:h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={buildBarData(giving, partnerGiving)}
+                        data={buildBarData(giving, partnerGivingNorm)}
                         layout="vertical"
                         margin={{ top: 8, right: 24, left: 56, bottom: 8 }}
                       >
@@ -466,7 +525,7 @@ export function DashboardClient({
                         <Tooltip content={<BarChartTooltip />} cursor={{ fill: "rgba(167,139,250,0.06)", radius: 8 }} />
                         <Bar
                           dataKey="you"
-                          name="You"
+                          name="You (Giving)"
                           fill="#a78bfa"
                           fillOpacity={0.9}
                           radius={[0, 6, 6, 0]}
@@ -475,10 +534,10 @@ export function DashboardClient({
                           animationEasing="ease-out"
                           activeBar={barActiveBarYou}
                         />
-                        {hasPartner && partnerGiving && (
+                        {hasPartner && partnerGivingNorm && (
                           <Bar
                             dataKey="partner"
-                            name="Partner"
+                            name="Partner (Giving)"
                             fill={PARTNER_CHART_COLOR}
                             fillOpacity={0.85}
                             radius={[0, 6, 6, 0]}
@@ -565,7 +624,7 @@ export function DashboardClient({
                           fillOpacity={0.35}
                           strokeWidth={2}
                         />
-                        {hasPartner && partnerReceiving && (
+                        {hasPartner && partnerReceivingNorm && (
                           <Radar
                             name="Partner (Receiving)"
                             dataKey="partnerValue"
@@ -586,7 +645,7 @@ export function DashboardClient({
                   <div className="h-[240px] w-full sm:h-[320px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
-                        data={buildBarData(receiving, partnerReceiving)}
+                        data={buildBarData(receiving, partnerReceivingNorm)}
                         layout="vertical"
                         margin={{ top: 8, right: 24, left: 56, bottom: 8 }}
                       >
@@ -596,7 +655,7 @@ export function DashboardClient({
                         <Tooltip content={<BarChartTooltip />} cursor={{ fill: "rgba(167,139,250,0.06)", radius: 8 }} />
                         <Bar
                           dataKey="you"
-                          name="You"
+                          name="You (Receiving)"
                           fill="#a78bfa"
                           fillOpacity={0.9}
                           radius={[0, 6, 6, 0]}
@@ -605,10 +664,10 @@ export function DashboardClient({
                           animationEasing="ease-out"
                           activeBar={barActiveBarYou}
                         />
-                        {hasPartner && partnerReceiving && (
+                        {hasPartner && partnerReceivingNorm && (
                           <Bar
                             dataKey="partner"
-                            name="Partner"
+                            name="Partner (Receiving)"
                             fill={PARTNER_CHART_COLOR}
                             fillOpacity={0.85}
                             radius={[0, 6, 6, 0]}
@@ -626,27 +685,17 @@ export function DashboardClient({
             </Card>
           </motion.div>
 
-          {/* Digital Garden (large) */}
+          {/* Question Exchange (Deep Cuts) */}
           <motion.div variants={cardItem} className="bento-cell col-span-2 row-span-2">
-          <Card className="card-hover glass h-full border-purple-500/10">
-            <CardHeader>
-              <CardTitle className="font-serif">Digital Garden</CardTitle>
-              <CardDescription>
-                Your love language as a plant — roots (Touch), stem (Time), leaves (Words), flower (Service & Gifts). Pick a leaf to send to your partner.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-[320px] w-full rounded-lg" />
-              ) : (
-                <DigitalGarden
-                  scores={giving}
-                  partnerId={partnerId}
-                  onLeafSent={handleLeafSent}
-                />
-              )}
-            </CardContent>
-          </Card>
+            <QuestionExchange
+              coupleId={coupleId}
+              hasPartner={!!hasPartner}
+              onAnswerSubmitted={() => {
+                setToast("Answer submitted. Revealed when your partner answers too.");
+                setTimeout(() => setToast(null), 3000);
+                router.refresh();
+              }}
+            />
           </motion.div>
 
           {/* Solo AI Insights — for users without a partner */}
@@ -796,81 +845,96 @@ export function DashboardClient({
             </motion.div>
           )}
 
-          {/* Heatmap */}
+          {/* Compatibility Overlap (when linked) */}
           <motion.div variants={cardItem} className="bento-cell col-span-2">
-          <Card className="card-hover glass h-full border-purple-500/10">
-            <CardHeader>
-              <CardTitle>Intensity grid</CardTitle>
-              <CardDescription>How strongly you give (top row) and need to receive (bottom row) each language — 1 (low) to 10 (high)</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-[220px] w-full rounded-lg" />
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="border border-border p-2 text-left text-xs text-muted-foreground" />
-                        {LOVE_LANGUAGE_KEYS.map((k) => (
-                          <th
-                            key={k}
-                            className="border border-border p-2 text-center text-xs text-muted-foreground"
-                          >
-                            {LABELS_SHORT[k]}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td className="border border-border p-2 text-xs text-muted-foreground">Giving</td>
-                        {LOVE_LANGUAGE_KEYS.map((k) => {
-                          const v = giving[k];
-                          const opacity = 0.2 + (v / 10) * 0.8;
-                          return (
-                            <td
-                              key={k}
-                              className="border border-border p-2 text-center text-sm font-medium"
-                              style={{
-                                backgroundColor: `rgba(139, 92, 246, ${opacity})`,
-                                color: v >= 6 ? "#fff" : "var(--foreground)",
-                              }}
-                            >
-                              {v}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                      <tr>
-                        <td className="border border-border p-2 text-xs text-muted-foreground">Receiving</td>
-                        {LOVE_LANGUAGE_KEYS.map((k) => {
-                          const v = receiving[k];
-                          const opacity = 0.2 + (v / 10) * 0.8;
-                          return (
-                            <td
-                              key={k}
-                              className="border border-border p-2 text-center text-sm font-medium"
-                              style={{
-                                backgroundColor: `rgba(196, 181, 253, ${opacity})`,
-                                color: v >= 6 ? "#0c0a0f" : "var(--foreground)",
-                              }}
-                            >
-                              {v}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <Card className="card-hover glass h-full border-purple-500/10">
+              <CardHeader>
+                <CardTitle className="font-serif text-base tracking-tight sm:text-lg">
+                  Compatibility Overlap
+                </CardTitle>
+                <CardDescription>
+                  Side-by-side comparison of where you and your partner align vs. miss each other.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loading ? (
+                  <Skeleton className="h-[220px] w-full rounded-lg" />
+                ) : hasPartner && partnerGivingNorm && partnerReceivingNorm ? (
+                  (() => {
+                    const { matched, oneSided, gap } = getCompatibilityOverlap(
+                      giving,
+                      receiving,
+                      partnerGivingNorm,
+                      partnerReceivingNorm
+                    );
+                    const hasAny = matched.length > 0 || oneSided.length > 0 || gap.length > 0;
+                    return (
+                      <div className="space-y-4">
+                        {matched.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+                              <span className="text-xs font-medium text-muted-foreground">Matched</span>
+                            </div>
+                            <ul className="list-none space-y-1 pl-4">
+                              {matched.map((text, i) => (
+                                <li key={i} className="text-sm text-foreground">
+                                  {text}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {oneSided.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-amber-500" aria-hidden />
+                              <span className="text-xs font-medium text-muted-foreground">One-sided</span>
+                            </div>
+                            <ul className="list-none space-y-1 pl-4">
+                              {oneSided.map((text, i) => (
+                                <li key={i} className="text-sm text-foreground">
+                                  {text}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {gap.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-red-500" aria-hidden />
+                              <span className="text-xs font-medium text-muted-foreground">Gap</span>
+                            </div>
+                            <ul className="list-none space-y-1 pl-4">
+                              {gap.map((text, i) => (
+                                <li key={i} className="text-sm text-foreground">
+                                  {text}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {!hasAny && (
+                          <p className="text-sm text-muted-foreground">
+                            Complete your assessments to see where you align and where you can grow.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    Link with a partner to see where you align and where you miss each other. This turns data into
+                    actionable relationship intelligence — the whole point of the app.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
           </motion.div>
 
           {/* AI Insight */}
-          {hasPartner && partnerGiving && partnerReceiving && (
+          {hasPartner && partnerGivingNorm && partnerReceivingNorm && (
             <motion.div variants={cardItem} className="bento-cell col-span-4">
             <Card className="card-hover glass border-purple-500/10">
               <CardHeader>
@@ -911,8 +975,9 @@ export function DashboardClient({
                         const result = await getCoupleInsight(
                           giving,
                           receiving,
-                          partnerGiving,
-                          partnerReceiving
+                          partnerGivingNorm,
+                          partnerReceivingNorm,
+                          coupleId
                         );
                         setInsight(result.coach);
                       } finally {

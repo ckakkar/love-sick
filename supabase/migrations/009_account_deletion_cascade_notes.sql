@@ -1,0 +1,20 @@
+-- Account deletion: ensure all user data is removed when auth.users row is deleted.
+-- No schema changes; this documents CASCADE behavior and ensures FKs are correct.
+--
+-- When auth.users(id) is deleted (via Auth Admin API):
+--   • profiles (id)                    → row deleted (ON DELETE CASCADE)
+--   • assessments (user_id)             → rows deleted (CASCADE)
+--   • prologues (user_id, partner_id)   → rows deleted (CASCADE)
+--   • interactions (user_id)            → rows deleted (CASCADE); partner_id SET NULL
+--   • partner_requests (from/to)        → rows deleted (CASCADE)
+--   • partner_notifications (to_user_id)→ rows deleted (CASCADE); from_user_id SET NULL
+--   • deep_cut_answers (user_id)        → rows deleted (CASCADE)
+--
+-- When profiles(id) is deleted (as a result):
+--   • couples (profile_a_id)            → row deleted (CASCADE)
+--   • couples (profile_b_id)            → SET NULL
+--   • invite_codes (created_by_id)      → rows deleted (CASCADE)
+--
+-- Application delete flow (API) also: notifies partner, deletes couple, deletes
+-- avatar files from storage, then deletes auth user. Storage is not CASCADE'd
+-- by Postgres so avatar cleanup is done in code.

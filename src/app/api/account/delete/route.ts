@@ -62,8 +62,23 @@ export async function POST(request: Request) {
     );
   }
 
+  const admin = createAdminClient();
+
+  // 1. Delete user's avatar files from storage (not auto-deleted when auth user is removed)
   try {
-    const admin = createAdminClient();
+    const { data: files } = await admin.storage.from("avatars").list(user.id);
+    if (files?.length) {
+      const paths = files.map((f) => `${user.id}/${f.name}`);
+      await admin.storage.from("avatars").remove(paths);
+    }
+  } catch {
+    // Non-fatal: continue with account deletion even if storage cleanup fails
+  }
+
+  // 2. Delete auth user; CASCADE removes: profile, assessments, prologues, interactions,
+  //    partner_requests, partner_notifications (to), deep_cut_answers. Profile CASCADE
+  //    removes invite_codes (created_by) and couples (profile_a). Couple already deleted above.
+  try {
     const { error: deleteUserErr } = await admin.auth.admin.deleteUser(user.id);
     if (deleteUserErr) {
       return NextResponse.json(
