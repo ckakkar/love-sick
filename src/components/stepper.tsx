@@ -10,11 +10,14 @@ import React, {
 } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export interface StepperProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
   initialStep?: number;
   onStepChange?: (step: number) => void;
+  /** If provided, called before advancing to next step. Return false (or Promise<false>) to block. */
+  onBeforeNext?: (currentStep: number) => void | boolean | Promise<void | boolean>;
   onFinalStepCompleted?: () => void | Promise<void | false>;
   stepCircleContainerClassName?: string;
   stepContainerClassName?: string;
@@ -37,6 +40,7 @@ export default function Stepper({
   children,
   initialStep = 1,
   onStepChange = () => {},
+  onBeforeNext,
   onFinalStepCompleted = () => {},
   stepCircleContainerClassName = "",
   stepContainerClassName = "",
@@ -75,11 +79,27 @@ export default function Stepper({
     }
   };
 
-  const handleNext = () => {
-    if (!isLastStep) {
-      setDirection(1);
-      updateStep(currentStep + 1);
+  const [nextLoading, setNextLoading] = useState(false);
+
+  const handleNext = async () => {
+    if (isLastStep) return;
+    if (onBeforeNext) {
+      setNextLoading(true);
+      try {
+        const result = onBeforeNext(currentStep);
+        const resolved = result instanceof Promise ? await result : result;
+        if (resolved === false) {
+          setNextLoading(false);
+          return;
+        }
+      } catch {
+        setNextLoading(false);
+        return;
+      }
+      setNextLoading(false);
     }
+    setDirection(1);
+    updateStep(currentStep + 1);
   };
 
   const [completing, setCompleting] = useState(false);
@@ -161,37 +181,30 @@ export default function Stepper({
           <div className={cn("mt-8", footerClassName)}>
             <div
               className={cn(
-                "flex",
+                "flex gap-3",
                 currentStep !== 1 ? "justify-between" : "justify-end"
               )}
             >
               {currentStep !== 1 && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={handleBack}
-                  className={cn(
-                    "rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-200",
-                    currentStep === 1
-                      ? "pointer-events-none cursor-default opacity-50 text-muted-foreground"
-                      : "text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
-                  )}
+                  className="text-muted-foreground hover:bg-violet-500/10 hover:text-foreground"
                   {...backButtonProps}
                 >
                   {backButtonText}
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 type="button"
                 onClick={isLastStep ? handleComplete : handleNext}
-                disabled={isLastStep && completing}
-                className={cn(
-                  "flex items-center justify-center rounded-2xl px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20 transition-all duration-200",
-                  "bg-gradient-to-r from-[#a78bfa] to-[#8b5cf6] hover:from-[#c4b5fd] hover:to-[#a78bfa] hover:shadow-violet-500/30 active:scale-[0.98] disabled:opacity-70"
-                )}
+                disabled={(isLastStep && completing) || nextLoading || nextButtonProps?.disabled}
+                className="min-w-[120px]"
                 {...nextButtonProps}
               >
-                {isLastStep ? completeButtonText : nextButtonText}
-              </button>
+                {nextLoading ? "Checking…" : isLastStep ? completeButtonText : nextButtonText}
+              </Button>
             </div>
           </div>
         )}

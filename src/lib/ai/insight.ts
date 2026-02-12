@@ -25,10 +25,11 @@ export type DeepCutExchange = { prompt: string; answerA: string; answerB: string
 export async function generateCoupleInsight(
   userStats: { giving: LoveScores; receiving: LoveScores },
   partnerStats: { giving: LoveScores; receiving: LoveScores },
-  deepCutExchanges: DeepCutExchange[] = []
+  deepCutExchanges: DeepCutExchange[] = [],
+  names?: { myName?: string; partnerName?: string }
 ): Promise<{ analyst: AnalystOutput; coach: CoachOutput }> {
   const analyst = await runAnalyst(userStats, partnerStats);
-  const coach = await runCoach(analyst, deepCutExchanges);
+  const coach = await runCoach(analyst, deepCutExchanges, names);
   return { analyst, coach };
 }
 
@@ -37,10 +38,11 @@ export type SoloDeepCut = { prompt: string; answer: string };
 export async function generateSoloInsight(
   giving: LoveScores,
   receiving: LoveScores,
-  myDeepCuts: SoloDeepCut[] = []
+  myDeepCuts: SoloDeepCut[] = [],
+  myName?: string
 ): Promise<CoachOutput> {
   const analyst = await runSoloAnalyst(giving, receiving);
-  return runSoloCoach(analyst, myDeepCuts);
+  return runSoloCoach(analyst, myDeepCuts, myName);
 }
 
 async function runSoloAnalyst(giving: LoveScores, receiving: LoveScores): Promise<SoloAnalystOutput> {
@@ -52,9 +54,9 @@ async function runSoloAnalyst(giving: LoveScores, receiving: LoveScores): Promis
     messages: [
       {
         role: "system",
-        content: `You are a 'Romantic Essentialist' and 'Data Poet.' Analyze one person's love language scores (1-10).
+        content: `You analyze one person's love language scores (1-10) for self-growth insight.
 Dimensions: words, service, gifts, time, touch. Two vectors: giving (how they express love), receiving (how they need to receive love).
-Identify their top 2 strengths (dimension + brief description), one area to grow (where giving and receiving might be misaligned or low), and a 1–2 sentence summary. STRICTLY no consumerist advice (no buying gifts, expensive dates, trips). Focus on creation and presence.
+Identify their top 2 strengths (dimension + brief description), one area to grow (where giving and receiving might be misaligned or low), and a 1–2 sentence summary. No consumerist advice. Focus on creation, presence, and self-awareness.
 Output valid JSON only, no markdown:
 {"strengths":[{"dimension":"string","score":number,"description":"string"}],"growArea":{"dimension":"string","description":"string"},"summary":"string"}`,
       },
@@ -101,10 +103,11 @@ function getFallbackSoloAnalyst(): SoloAnalystOutput {
   };
 }
 
-async function runSoloCoach(analyst: SoloAnalystOutput, myDeepCuts: SoloDeepCut[] = []): Promise<CoachOutput> {
+async function runSoloCoach(analyst: SoloAnalystOutput, myDeepCuts: SoloDeepCut[] = [], myName?: string): Promise<CoachOutput> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) return getFallbackSoloCoach();
 
+  const nameBlock = myName ? `\nThe person's first name (use when it feels natural): ${myName.split(/\s+/)[0]}.` : "";
   const deepCutsBlock =
     myDeepCuts.length > 0
       ? `\n\nOptional context — this person's "Deep Cuts" answers (question + their answer). Use to personalize the prescription and rituals:\n${JSON.stringify(myDeepCuts)}`
@@ -115,11 +118,11 @@ async function runSoloCoach(analyst: SoloAnalystOutput, myDeepCuts: SoloDeepCut[
     messages: [
       {
         role: "system",
-        content: `You are a 'Romantic Essentialist' and 'Data Poet.'
-Context: A single person's love language analysis (strengths, one area to grow, summary). Your job: write a short "Personal prescription" (2–3 paragraphs) that helps them grow in self-love and readiness to love others. Then suggest exactly 3 actionable, non-consumerist rituals or practices (title + one sentence "why"). STRICTLY FORBIDDEN: buying gifts, expensive dinners, booking trips, generic consumerist dates. Focus on creation, presence, and small daily rituals.
-Tone: Witty, deep, slightly poetic. No corporate speak.
+        content: `You help a single person grow in self-awareness and emotional readiness using their love language analysis (strengths, one area to grow, summary).
+Your job: Write a short "Personal prescription" (2–3 paragraphs) focused on self-growth: how they can understand themselves better, build healthy habits, and be ready to give and receive love. Then suggest exactly 3 actionable, non-consumerist rituals or practices (title + one sentence "why"). FORBIDDEN: buying gifts, expensive dinners, trips, generic consumerist dates. Focus on creation, presence, and small daily rituals.
+Tone: Warm, clear, and productive. Sound human and supportive—not corporate, not overly poetic or flowery. One or two thoughtful phrases are fine; keep the rest grounded and useful.
 Output valid JSON only, no markdown:
-{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}${deepCutsBlock}`,
+{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}${nameBlock}${deepCutsBlock}`,
       },
       {
         role: "user",
@@ -179,11 +182,9 @@ async function runAnalyst(
     messages: [
       {
         role: "system",
-        content: `You are a 'Romantic Essentialist' and 'Data Poet.' Analyze two JSON datasets representing love language scores (1-10) for two partners.
-Partner A: giving (how they express love), receiving (how they need to receive love). Same for Partner B.
-Dimensions: words, service, gifts, time, touch.
-Identify the 3 biggest statistical variances between the two people. You are STRICTLY FORBIDDEN from suggesting: buying gifts, expensive dinners, booking trips, or standard consumerist dates. Focus on 'Creation' over 'Consumption.'
-Output valid JSON only, no markdown, with this exact shape:
+        content: `Analyze two people's love language scores (1-10): giving (how they express love), receiving (how they need to receive love). Dimensions: words, service, gifts, time, touch.
+Identify the 3 biggest variances between them and a 1–2 sentence summary. No consumerist advice. Focus on creation and presence.
+Output valid JSON only, no markdown:
 {"topThreeVariances":[{"dimension":"string","variance":number,"description":"string"}],"loveDeficit":number,"summary":"string"}`,
       },
       {
@@ -237,15 +238,23 @@ function getFallbackAnalyst(): AnalystOutput {
   };
 }
 
-async function runCoach(analyst: AnalystOutput, deepCutExchanges: DeepCutExchange[] = []): Promise<CoachOutput> {
+async function runCoach(
+  analyst: AnalystOutput,
+  deepCutExchanges: DeepCutExchange[] = [],
+  names?: { myName?: string; partnerName?: string }
+): Promise<CoachOutput> {
   const key = process.env.OPENAI_API_KEY;
   if (!key) {
     return getFallbackCoach();
   }
 
+  const myFirst = names?.myName?.trim().split(/\s+/)[0] || "Partner A";
+  const partnerFirst = names?.partnerName?.trim().split(/\s+/)[0] || "Partner B";
+  const namesBlock = `\nUse their first names when it fits naturally: ${myFirst} (the person viewing this) and ${partnerFirst} (their partner). Make it personal—reference each by name and their specific scores/patterns where it helps.`;
+
   const deepCutsBlock =
     deepCutExchanges.length > 0
-      ? `\n\nOptional context — the couple's "Deep Cuts" answers (question and both partners' answers). Use these to personalize the prescription and date ideas; reference their words and fears where relevant:\n${JSON.stringify(deepCutExchanges)}`
+      ? `\n\nOptional context — the couple's "Deep Cuts" answers (question and both partners' answers). Use to personalize the prescription and rituals; reference their words where relevant:\n${JSON.stringify(deepCutExchanges)}`
       : "";
 
   const payload = {
@@ -253,19 +262,11 @@ async function runCoach(analyst: AnalystOutput, deepCutExchanges: DeepCutExchang
     messages: [
       {
         role: "system",
-        content: `You are a 'Romantic Essentialist' and 'Data Poet.'
-Your Goal: Analyze the relationship data to suggest growth, but you are STRICTLY FORBIDDEN from suggesting: buying gifts, expensive dinners, booking trips, or standard consumerist dates.
-
-Your Rules:
-1. Focus on 'Creation' over 'Consumption'.
-2. If they need 'Quality Time', suggest: 'Baking oat brownies together on video call' or 'Building a blanket fort.'
-3. If they need 'Gifts', suggest: 'Hand-writing a letter' or 'Folding an origami frog.'
-4. If they need 'Acts of Service', suggest: 'Creating a custom playlist' or 'Debugging their code.'
-
-Tone: Witty, deep, and slightly poetic. No corporate speak.
-
-You receive analysis data (top variances and love deficit). Write a short "Relationship Prescription": 2-3 paragraphs. Then suggest exactly 3 actionable, non-consumerist "dates" or rituals (title + one sentence "why" for each). Output valid JSON only, no markdown:
-{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}${deepCutsBlock}`,
+        content: `You help a couple grow together and love each other better using their combined love language data (variances, summary). You receive analysis of both partners' giving and receiving scores.
+Your job: Write a short "Relationship Prescription" (2–3 paragraphs) that is personal and specific: how they can grow together, meet each other's needs, and strengthen the relationship. Use both partners' first names and refer to their actual patterns (e.g. "When ${partnerFirst} gives high on X but ${myFirst} needs more Y..."). Then suggest exactly 3 actionable, non-consumerist rituals or "dates" (title + one sentence "why"). FORBIDDEN: buying gifts, expensive dinners, trips, generic consumerist dates. Focus on creation, presence, and small daily rituals (e.g. handwritten notes, cooking together, a shared playlist, quality time blocks).
+Tone: Warm, clear, and productive. Sound human and supportive—not corporate, not overly poetic or flowery. Be specific to their data and use their names so it feels written for them.
+Output valid JSON only, no markdown:
+{"relationshipPrescription":"string","threeDates":[{"title":"string","why":"string"}]}${namesBlock}${deepCutsBlock}`,
       },
       {
         role: "user",

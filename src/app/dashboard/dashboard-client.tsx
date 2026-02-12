@@ -193,6 +193,7 @@ export function DashboardClient({
   notifyPartnerOnline = true,
   myTimezone = null,
   partnerTimezone = null,
+  partnerDisplayName = null,
 }: {
   myGiving: LoveScores | null;
   myReceiving: LoveScores | null;
@@ -212,6 +213,7 @@ export function DashboardClient({
   notifyPartnerOnline?: boolean;
   myTimezone?: string | null;
   partnerTimezone?: string | null;
+  partnerDisplayName?: string | null;
 }) {
   const giving = myGiving != null ? normalizeLoveScores(myGiving) : DEFAULT_SCORES;
   const receiving = myReceiving != null ? normalizeLoveScores(myReceiving) : DEFAULT_SCORES;
@@ -749,7 +751,7 @@ export function DashboardClient({
                         onClick={async () => {
                           setSoloInsightLoading(true);
                           try {
-                            const result = await getSoloInsight(giving, receiving);
+                            const result = await getSoloInsight(giving, receiving, undefined, displayName ?? undefined);
                             setSoloInsight(result);
                           } finally {
                             setSoloInsightLoading(false);
@@ -822,7 +824,7 @@ export function DashboardClient({
                         onClick={async () => {
                           setSoloInsightLoading(true);
                           try {
-                            const result = await getSoloInsight(giving, receiving);
+                            const result = await getSoloInsight(giving, receiving, undefined, displayName ?? undefined);
                             setSoloInsight(result);
                           } finally {
                             setSoloInsightLoading(false);
@@ -977,7 +979,9 @@ export function DashboardClient({
                           receiving,
                           partnerGivingNorm,
                           partnerReceivingNorm,
-                          coupleId
+                          coupleId,
+                          displayName ?? undefined,
+                          partnerDisplayName ?? undefined
                         );
                         setInsight(result.coach);
                       } finally {

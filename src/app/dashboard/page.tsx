@@ -41,7 +41,7 @@ export default async function DashboardPage() {
   const partnerId =
     couples?.[0]?.profile_a_id === user.id
       ? couples[0].profile_b_id
-      : couples?.[0]?.profile_b_id ?? null;
+      : couples?.[0]?.profile_a_id ?? null;
 
   let partnerAssessment: { giving_scores: LoveScores; receiving_scores: LoveScores } | null = null;
   if (partnerId) {
@@ -104,13 +104,16 @@ export default async function DashboardPage() {
   const displayName = profile?.full_name || profile?.display_name || profile?.username || null;
 
   let partnerTimezone: string | null = null;
+  let partnerDisplayName: string | null = null;
   if (partnerId) {
     const { data: partnerProfile } = await supabase
       .from("profiles")
-      .select("timezone")
+      .select("timezone, full_name, display_name, username")
       .eq("id", partnerId)
       .single();
     partnerTimezone = partnerProfile?.timezone ?? null;
+    partnerDisplayName =
+      partnerProfile?.full_name || partnerProfile?.display_name || partnerProfile?.username || null;
   }
 
   return (
@@ -133,6 +136,7 @@ export default async function DashboardPage() {
       notifyPartnerOnline={profile?.notify_partner_online !== false}
       myTimezone={profile?.timezone ?? null}
       partnerTimezone={partnerTimezone}
+      partnerDisplayName={partnerDisplayName}
     />
   );
 }

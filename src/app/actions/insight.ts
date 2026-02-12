@@ -55,14 +55,18 @@ export async function getCoupleInsight(
   userReceiving: LoveScores,
   partnerGiving: LoveScores,
   partnerReceiving: LoveScores,
-  coupleId?: string | null
+  coupleId?: string | null,
+  myName?: string,
+  partnerName?: string
 ) {
   const deepCuts = coupleId ? await getRevealedDeepCuts(coupleId) : [];
-  return generateCoupleInsight(
+  const result = await generateCoupleInsight(
     { giving: userGiving, receiving: userReceiving },
     { giving: partnerGiving, receiving: partnerReceiving },
-    deepCuts
+    deepCuts,
+    { myName, partnerName }
   );
+  return result.coach;
 }
 
 export type SoloDeepCut = { prompt: string; answer: string };
@@ -97,8 +101,9 @@ async function getMyDeepCuts(coupleId: string): Promise<SoloDeepCut[]> {
 export async function getSoloInsight(
   giving: LoveScores,
   receiving: LoveScores,
-  coupleId?: string | null
+  coupleId?: string | null,
+  myName?: string
 ) {
   const myDeepCuts = coupleId ? await getMyDeepCuts(coupleId) : [];
-  return generateSoloInsight(giving, receiving, myDeepCuts);
+  return generateSoloInsight(giving, receiving, myDeepCuts, myName);
 }
