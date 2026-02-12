@@ -31,33 +31,40 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: couple, error: coupleErr } = await supabase
+  const { data: couples, error: coupleErr } = await supabase
     .from("couples")
     .select("id, profile_a_id, profile_b_id")
-    .or(`profile_a_id.eq.${user.id},profile_b_id.eq.${user.id}`)
-    .maybeSingle();
+    .or(`profile_a_id.eq.${user.id},profile_b_id.eq.${user.id}`);
 
-  if (coupleErr || !couple) {
+  if (coupleErr || !couples || couples.length === 0) {
     return NextResponse.json({ error: "You are not linked with a partner." }, { status: 404 });
   }
 
-  const partnerId = couple.profile_a_id === user.id ? couple.profile_b_id : couple.profile_a_id;
-  if (!partnerId) {
-    return NextResponse.json({ error: "No partner found on this link." }, { status: 400 });
+  // Collect unique partner IDs to notify (in case of multiple links to same person)
+  const partnerIds = new Set<string>();
+  for (const c of couples) {
+    const pid = c.profile_a_id === user.id ? c.profile_b_id : c.profile_a_id;
+    if (pid) partnerIds.add(pid);
   }
 
-  const { error: notifErr } = await supabase.from("partner_notifications").insert({
-    to_user_id: partnerId,
-    from_user_id: user.id,
-    type: "unlink_reason",
-    payload: { reason },
-  });
-
-  if (notifErr) {
-    return NextResponse.json({ error: notifErr.message || "Failed to send message to partner." }, { status: 500 });
+  // Send notifications to all unique partners found
+  for (const partnerId of Array.from(partnerIds)) {
+    await supabase.from("partner_notifications").insert({
+      to_user_id: partnerId,
+      from_user_id: user.id,
+      type: "unlink_reason",
+      payload: { reason },
+    });
   }
 
-  const { error: deleteErr } = await supabase.from("couples").delete().eq("id", couple.id);
+  // Delete ALL duplicate couple records found
+  const { error: deleteErr } = await supabase
+    .from("couples")
+    .delete()
+    .in(
+      "id",
+      couples.map((c) => c.id)
+    );
 
   if (deleteErr) {
     return NextResponse.json({ error: deleteErr.message || "Failed to unlink." }, { status: 500 });
