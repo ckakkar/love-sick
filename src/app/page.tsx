@@ -81,7 +81,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.22, ease: [0.32, 0.72, 0, 1] }}
-            className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:mt-10"
+            className="mt-8 sm:mt-10"
           >
             <Button size="lg" asChild className="group w-full min-w-0 shadow-lg shadow-violet-500/20 sm:min-w-[180px] sm:w-auto">
               <Link href="/login">
@@ -89,12 +89,6 @@ export default function LandingPage() {
                 <ArrowRight className="h-4 w-4 transition-transform duration-300 ease-out group-hover:translate-x-0.5" />
               </Link>
             </Button>
-            <Link
-              href="/assess"
-              className="text-sm text-muted-foreground underline-offset-4 transition-colors duration-200 hover:text-foreground"
-            >
-              Take the assessment first →
-            </Link>
           </motion.div>
           </div>
 
