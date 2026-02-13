@@ -983,7 +983,7 @@ export function DashboardClient({
                           displayName ?? undefined,
                           partnerDisplayName ?? undefined
                         );
-                        setInsight(result.coach);
+                        setInsight(result);
                       } finally {
                         setInsightLoading(false);
                       }
