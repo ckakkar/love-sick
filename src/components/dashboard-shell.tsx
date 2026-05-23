@@ -87,7 +87,7 @@ export function DashboardShell({
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-30 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur-xl supports-backdrop-filter:bg-background/80">
+      <header className="sticky top-0 z-30 shrink-0 border-b border-border/60 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-2 px-3 sm:px-6">
           <Link href="/dashboard" className="font-serif text-lg font-semibold tracking-tight text-foreground">
             Love Sick

@@ -83,7 +83,7 @@ export function PrologueModal({
           >
             {count} / {MIN_CHARS}
           </span>
-          {error && <span className="text-xs text-destructive">{error}</span>}
+          {error && <span role="alert" className="text-xs text-red-400">{error}</span>}
         </div>
         <Button
           onClick={handleSubmit}

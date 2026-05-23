@@ -13,6 +13,7 @@ import {
   Heart,
   MapPin,
   Sparkles,
+  AlertCircle,
 } from "lucide-react";
 import {
   getBrowserTimezone,
@@ -392,8 +393,9 @@ export default function OnboardingPage() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-4 flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              role="alert"
               >
-                <span className="shrink-0 text-red-400">!</span>
+                <AlertCircle className="h-4 w-4 shrink-0 text-red-400" />
                 {error}
               </motion.div>
             )}

@@ -163,6 +163,7 @@ export default function SettingsPage() {
     setLoading(false);
     if (res.ok) {
       setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
       router.refresh();
     } else {
       setError(data.error || "Something went wrong.");
@@ -390,8 +391,8 @@ export default function SettingsPage() {
                 </select>
                 <p className="text-xs text-muted-foreground">Used for your local time and partner time difference on the dashboard.</p>
               </div>
-              {error && <p className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
-              {success && <p className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Profile saved.</p>}
+              {error && <p role="alert" className="rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-300">{error}</p>}
+              {success && <p role="status" className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-300">Profile saved.</p>}
               <Button type="submit" disabled={loading}>
                 {loading ? (
                   <>
